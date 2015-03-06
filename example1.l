@@ -1,7 +1,8 @@
-//Precedence Rules:
-//	Rules that are matched more specifically come first.
-//	If both match the same, first rule written in this file is used.
-
+/*
+Precedence Rules:
+	Rules that are matched more specifically come first.
+	If both match the same, first rule written in this file is used.
+*/
 %{
 #include <stdio.h>
 %}
