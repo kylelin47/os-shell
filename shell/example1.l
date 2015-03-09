@@ -5,16 +5,14 @@ Precedence Rules:
 */
 %{
 #include <stdio.h>
+#include "y.tab.h"
 %}
-
 %%
-bye						return 0;
-[a-zA-Z][a-zA-Z0-9]*    printf("WORD ");
-[a-zA-Z0-9\/.-]+        printf("FILENAME ");
-\"                      printf("QUOTE ");
-\{                      printf("OBRACE ");
-\}                      printf("EBRACE ");
-;                       printf("SEMICOLON ");
-\n                      printf("\n");
+[0-9]+                  return NUMBER;
+heat                    return TOKHEAT;
+on|off                  return STATE;
+target                  return TOKTARGET;
+temperature             return TOKTEMPERATURE;
+\n                      /* ignore end of line */;
 [ \t]+                  /* ignore whitespace */;
 %%

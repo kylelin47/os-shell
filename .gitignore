@@ -30,3 +30,6 @@
 
 # Lex files
 *.yy.c
+
+# Yac files
+*.tab.*
