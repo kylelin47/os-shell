@@ -10,8 +10,9 @@ Precedence Rules:
 %%
 bye                     return BYE;
 help                    return HELP;
-[0-9]+                  return NUMBER;
-[a-zA-Z][a-zA-Z0-9]*    yylval = strdup(yytext); return WORD;
+echo                    return PRINT;
+[0-9]+                  yylval.number=atoi(yytext); return NUMBER;
+[a-zA-Z][a-zA-Z0-9]*    yylval.string=strdup(yytext); return WORD;
 \n                      return TERMINATOR;
 ;                       return TERMINATOR;
 [ \t]+                  /* ignore whitespace */;
