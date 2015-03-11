@@ -9,6 +9,12 @@ insert_final_newline = true
 [*.c]
 indent_size = 4
 
+[*.y]
+indent_size = 8
+
+[*.l]
+indent_size = 8
+
 [Makefile]
 indent_style = tab
 indent_size = 8

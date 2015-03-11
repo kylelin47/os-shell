@@ -1,19 +1,40 @@
 %{
 #include <stdio.h>
 #include <string.h>
- 
+extern FILE *yyin;
+extern FILE *yyout;
+extern int yylineno;
+int nonInteractive;
 void yyerror(const char *str)
 {
-        fprintf(stderr,"error: %s\n",str);
+        if (nonInteractive == 1)
+        {
+                fprintf(stderr,"error: %s at line %d\n",str,yylineno);
+        }
+        else
+        {
+                fprintf(stderr,"error: %s\n",str);
+        }
 }
  
 int yywrap()
 {
+        fclose(yyin);
         return 1;
 } 
   
-main()
+main(int argc, char* argv[])
 {
+        nonInteractive = 0;
+        if (argc >= 2)
+        {
+                yyin = fopen(argv[1], "r");
+                nonInteractive = 1;
+        }
+        if (argc == 3) 
+        {
+                yyout = fopen(argv[2], "w");
+        }
         yyparse();
 } 
 
@@ -26,7 +47,6 @@ main()
         int number;
         char* string;
 }
-
 %token <number> NUMBER
 %token <string> WORD
 %%
@@ -43,31 +63,41 @@ command:
         bye_name
         |
         print_number
+        |
+        print_string
         ;
 help:
         HELP
         {
-                printf("\tType bye and exit this thing\n");
+                fprintf(yyout, "\tType bye and exit this thing\n");
         }
         ;
 bye:
         BYE
         {
-                printf("\tbye detected. Exiting shell\n");
+                fprintf(yyout, "\tbye detected. Exiting shell\n");
+                fclose(yyin);
                 return 0;
         }
         ;
 bye_name:
         BYE WORD
         {
-                printf("\tGoodbye %s\n", $2);
+                fprintf(yyout, "\tGoodbye %s\n", $2);
+                fclose(yyin);
                 return 0;
         }
         ;
 print_number:
         PRINT NUMBER
         {
-                printf("%d\n", $2);
+                fprintf(yyout, "%d\n", $2);
+        }
+        ;
+print_string:
+        PRINT WORD
+        {
+                fprintf(yyout, "%s\n", $2);
         }
         ;
 %%

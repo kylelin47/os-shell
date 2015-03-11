@@ -7,10 +7,13 @@ Precedence Rules:
 #include <stdio.h>
 #include "y.tab.h"
 %}
+%option yylineno
 %%
 bye                     return BYE;
 help                    return HELP;
 echo                    return PRINT;
+\"(?:[^"\\]|\\.)*\"     {yylval.string = (char*)calloc(strlen(yytext)-1, sizeof(char));
+                        strncpy(yylval.string, &yytext[1], strlen(yytext)-2); return WORD;}
 [0-9]+                  yylval.number=atoi(yytext); return NUMBER;
 [a-zA-Z][a-zA-Z0-9]*    yylval.string=strdup(yytext); return WORD;
 \n                      return TERMINATOR;
