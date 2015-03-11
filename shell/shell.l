@@ -12,6 +12,7 @@ Precedence Rules:
 bye                     return BYE;
 help                    return HELP;
 echo                    return PRINT;
+\}                      return END_BRACE;
 "$"\{(.*?)\}            {yylval.string = (char*)calloc(strlen(yytext)-2, sizeof(char));
                         strncpy(yylval.string, &yytext[2], strlen(yytext)-3); return WORD;}              
 \"(?:[^"\\]|\\.)*\"     {yylval.string = (char*)calloc(strlen(yytext)-1, sizeof(char));

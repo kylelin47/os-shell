@@ -40,7 +40,7 @@ main(int argc, char* argv[])
 
 %}
 
-%token BYE HELP TERMINATOR PRINT
+%token BYE HELP TERMINATOR PRINT END_BRACE
 
 %union
 {
