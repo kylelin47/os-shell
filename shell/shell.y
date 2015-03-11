@@ -49,6 +49,7 @@ main(int argc, char* argv[])
 }
 %token <number> NUMBER
 %token <string> WORD
+%token <string> VAR
 %%
 commands: /* empty */
         | commands error TERMINATOR { yyerrok; }
@@ -65,6 +66,8 @@ command:
         print_number
         |
         print_string
+        |
+        print_var
         ;
 help:
         HELP
@@ -98,6 +101,19 @@ print_string:
         PRINT WORD
         {
                 fprintf(yyout, "%s\n", $2);
+        }
+        ;
+print_var:
+        PRINT VAR
+        {
+                if (strcmp("yolo", $2) == 0)
+                {
+                        fprintf(yyout, "swag\n");
+                }
+                else
+                {
+                        fprintf(yyout, "%s\n", $2);
+                }
         }
         ;
 %%
