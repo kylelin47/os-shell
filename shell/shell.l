@@ -21,7 +21,7 @@ unalias                 return UNALIAS;
                         strncpy(yylval.string, &yytext[2], strlen(yytext)-3); return VAR;}              
 \"(?:[^"\\]|\\.)*\"     {yylval.string = (char*)calloc(strlen(yytext)-1, sizeof(char));
                         strncpy(yylval.string, &yytext[1], strlen(yytext)-2); return WORD;}
-[./\-a-zA-Z0-9]*         yylval.string=strdup(yytext); return WORD;
+[~./\-a-zA-Z0-9]*        yylval.string=strdup(yytext); return WORD;
 \n                      return TERMINATOR;
 ;                       return TERMINATOR;
 [ \t]+                  /* ignore whitespace */;

@@ -2,6 +2,7 @@ printenv
 cd ..
 cd shell/tests
 cd /home
+cd ~
 cd asodspdk
 e r r r o r
 bye

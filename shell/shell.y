@@ -17,7 +17,15 @@ int yywrap()
         fclose(yyin);
         return 1;
 } 
-  
+
+char* concat(char *s1, char *s2)
+{
+    char *result = malloc(strlen(s1)+strlen(s2)+1);//+1 for the zero-terminator
+    strcpy(result, s1);
+    strcat(result, s2);
+    return result;
+}
+
 main(int argc, char* argv[])
 {
         yyparse();
@@ -55,6 +63,10 @@ command:
         alias
         |
         unalias
+        |
+        var
+        |
+        word
         ;
 bye:
         BYE
@@ -87,11 +99,18 @@ cd:
         CD WORD
         {
                 int ret;
-                ret = chdir($2);
+                char *path = $2;
+                if ($2[0] == '~')
+                {
+                        path++;
+                        path = concat(getenv("HOME"), path);
+                }
+                ret = chdir(path);
                 if (ret == 0)
                         system ("ls");
                 else
-                        printf("Path %s not found\n", $2);
+                        printf("Path %s not found\n", path);
+                free(path);
         }
         ;
 cd_no_args:
@@ -111,4 +130,14 @@ unalias:
                 return 0;
         }
         ;
+var:
+        VAR
+        {
+                printf("var: %s\n", $1);
+        }
+word:
+        WORD
+        {
+                printf("word: %s\n", $1);
+        }
 %%
