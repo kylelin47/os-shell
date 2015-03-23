@@ -1,0 +1,7 @@
+printenv
+cd ..
+cd shell/tests
+cd /home
+cd asodspdk
+e r r r o r
+bye

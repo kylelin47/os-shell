@@ -1,20 +1,15 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <string.h>
 extern FILE *yyin;
 extern FILE *yyout;
 extern int yylineno;
-int nonInteractive;
+extern char **environ;
 void yyerror(const char *str)
 {
-        if (nonInteractive == 1)
-        {
-                fprintf(stderr,"error: %s at line %d\n",str,yylineno);
-        }
-        else
-        {
-                fprintf(stderr,"error: %s\n",str);
-        }
+        fprintf(stderr,"error: %s at line %d\n",str,yylineno);
 }
  
 int yywrap()
@@ -25,29 +20,17 @@ int yywrap()
   
 main(int argc, char* argv[])
 {
-        nonInteractive = 0;
-        if (argc >= 2)
-        {
-                yyin = fopen(argv[1], "r");
-                nonInteractive = 1;
-        }
-        if (argc == 3) 
-        {
-                yyout = fopen(argv[2], "w");
-        }
         yyparse();
 } 
 
 %}
 
-%token BYE HELP TERMINATOR PRINT END_BRACE
+%token BYE SETENV PRINTENV UNSETENV CD ALIAS UNALIAS TERMINATOR END_BRACE
 
 %union
 {
-        int number;
         char* string;
 }
-%token <number> NUMBER
 %token <string> WORD
 %token <string> VAR
 %%
@@ -57,63 +40,75 @@ commands: /* empty */
         ;
 
 command:
-        help
-        |
         bye
         |
-        bye_name
+        setenv
         |
-        print_number
+        printenv
         |
-        print_string
+        unsetenv
         |
-        print_var
-        ;
-help:
-        HELP
-        {
-                fprintf(yyout, "\tType bye and exit this thing\n");
-        }
+        cd
+        |
+        cd_no_args
+        |
+        alias
+        |
+        unalias
         ;
 bye:
         BYE
         {
-                fprintf(yyout, "\tbye detected. Exiting shell\n");
                 fclose(yyin);
                 return 0;
         }
         ;
-bye_name:
-        BYE WORD
+setenv:
+        SETENV WORD WORD
         {
-                fprintf(yyout, "\tGoodbye %s\n", $2);
-                fclose(yyin);
                 return 0;
         }
         ;
-print_number:
-        PRINT NUMBER
+printenv:
+        PRINTENV
         {
-                fprintf(yyout, "%d\n", $2);
+                char **var;
+                for(var=environ; *var!=NULL;++var)
+                        printf("%s\n",*var);      
         }
         ;
-print_string:
-        PRINT WORD
+unsetenv:
+        UNSETENV WORD
         {
-                fprintf(yyout, "%s\n", $2);
+                return 0;
         }
         ;
-print_var:
-        PRINT VAR
+cd:
+        CD WORD
         {
-                if (strcmp("yolo", $2) == 0)
-                {
-                        fprintf(yyout, "swag\n");
-                }
+                int ret;
+                ret = chdir($2);
+                if (ret == 0)
+                        system ("ls");
                 else
-                {
-                        fprintf(yyout, "%s\n", $2);
-                }
+                        printf("Path %s not found\n", $2);
+        }
+        ;
+cd_no_args:
+        CD
+        {
+                printf("ayy lmao\n");
+        }
+alias:
+        ALIAS WORD WORD
+        {
+                return 0;
+        }
+        ;
+unalias:
+        UNALIAS WORD
+        {
+                return 0;
         }
         ;
 %%
