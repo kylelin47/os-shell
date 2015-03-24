@@ -118,7 +118,7 @@ cd:
 cd_no_args:
         CD
         {
-                printf("ayy lmao\n");
+                chdir(getenv("HOME"));
         }
 alias:
         ALIAS WORD WORD

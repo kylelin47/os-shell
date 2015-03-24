@@ -4,9 +4,15 @@ printenv
 unsetenv best
 printenv
 cd ..
+ls
 cd shell/tests
+ls
 cd /home
-cd ~
+ls
+cd ~/os-shell
+ls
+cd
+ls
 cd asodspdk
 e r r r o r
 bye
