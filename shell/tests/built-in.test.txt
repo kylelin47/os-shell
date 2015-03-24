@@ -1,3 +1,7 @@
+setenv "ay lmao" "yoyo"
+setenv best worst
+printenv
+unsetenv best
 printenv
 cd ..
 cd shell/tests

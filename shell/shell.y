@@ -34,6 +34,7 @@ main(int argc, char* argv[])
 %}
 
 %token BYE SETENV PRINTENV UNSETENV CD ALIAS UNALIAS TERMINATOR END_BRACE
+%token LS
 
 %union
 {
@@ -67,6 +68,8 @@ command:
         var
         |
         word
+        |
+        ls
         ;
 bye:
         BYE
@@ -78,7 +81,7 @@ bye:
 setenv:
         SETENV WORD WORD
         {
-                return 0;
+                setenv($2, $3, 1);
         }
         ;
 printenv:
@@ -92,25 +95,24 @@ printenv:
 unsetenv:
         UNSETENV WORD
         {
-                return 0;
+                unsetenv($2);
         }
         ;
 cd:
         CD WORD
         {
                 int ret;
+                int tilde = 0;
                 char *path = $2;
                 if ($2[0] == '~')
                 {
                         path++;
                         path = concat(getenv("HOME"), path);
+                        tilde = 1;
                 }
                 ret = chdir(path);
-                if (ret == 0)
-                        system ("ls");
-                else
-                        printf("Path %s not found\n", path);
-                free(path);
+                if (ret != 0) printf("Path %s not found\n", path);
+                if (tilde == 1) free(path);
         }
         ;
 cd_no_args:
@@ -130,6 +132,7 @@ unalias:
                 return 0;
         }
         ;
+/* Testing stuff. Not going to be in the final */
 var:
         VAR
         {
@@ -139,5 +142,10 @@ word:
         WORD
         {
                 printf("word: %s\n", $1);
+        }
+ls:
+        LS
+        {
+            system("ls");
         }
 %%
