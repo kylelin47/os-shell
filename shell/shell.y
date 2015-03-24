@@ -26,8 +26,75 @@ char* concat(char *s1, char *s2)
     return result;
 }
 
-main(int argc, char* argv[])
+typedef struct node {
+    char* alias;
+    char* val;
+    struct node * next;
+} node_t;
+
+void push(node_t ** head, char* alias, char* val) {
+    node_t * current = *head;
+    node_t * newNode = malloc(sizeof(node_t));
+    newNode->alias = alias;
+    newNode->val = val;
+    newNode->next = NULL;
+    if (current != NULL)
+    {
+        while (current->next != NULL) {
+            current = current->next;
+        }
+        current->next = newNode;
+    }
+    else
+    {
+        *head = newNode;
+    }
+    
+}
+
+int remove_by_alias(node_t ** head, char * alias) {
+    node_t * current = *head;
+    node_t * prev = NULL;
+    while (1) {
+        if (current == NULL) return -1;
+        if (strcmp(current->alias, alias) == 0) break;
+        prev = current;
+        current = current->next;
+    }
+    if (current == *head) *head = current->next;
+    if (prev != NULL) prev->next = current->next;
+    free(current);
+    return 0;
+}
+
+char* retrieve_val(node_t * head, char * alias)
 {
+    node_t * current = head;
+    while (current != NULL)
+    {
+        if (strcmp(current->alias, alias) == 0)
+        {
+            return current->val;
+        }
+        current = current->next;
+    }
+    return NULL;
+}
+
+void print_list(node_t * head)
+{
+    node_t * current = head;
+    while (current != NULL)
+    {
+        printf("%s = %s\n", current->alias, current->val);
+        current = current->next;
+    }
+}
+
+node_t * alias_head;
+main(int argc, char* argv[])
+{       
+        alias_head = NULL;
         yyparse();
 } 
 
@@ -62,6 +129,8 @@ command:
         cd_no_args
         |
         alias
+        |
+        alias_print
         |
         unalias
         |
@@ -123,13 +192,18 @@ cd_no_args:
 alias:
         ALIAS WORD WORD
         {
-                return 0;
+                push(&alias_head, $2, $3);
         }
         ;
+alias_print:
+        ALIAS
+        {
+                print_list(alias_head);
+        }
 unalias:
         UNALIAS WORD
         {
-                return 0;
+                remove_by_alias(&alias_head, $2);
         }
         ;
 /* Testing stuff. Not going to be in the final */

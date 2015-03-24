@@ -13,6 +13,10 @@ cd ~/os-shell
 ls
 cd
 ls
+alias hello goodbye
+alias
+unalias hello
+alias
 cd asodspdk
 e r r r o r
 bye
