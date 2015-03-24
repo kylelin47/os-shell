@@ -86,7 +86,7 @@ void print_list(node_t * head)
     node_t * current = head;
     while (current != NULL)
     {
-        printf("%s = %s\n", current->alias, current->val);
+        printf("alias %s='%s'\n", current->alias, current->val);
         current = current->next;
     }
 }
