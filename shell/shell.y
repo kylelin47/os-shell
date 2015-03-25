@@ -20,7 +20,7 @@ int yywrap()
 
 char* concat(char *s1, char *s2)
 {
-    char *result = malloc(strlen(s1)+strlen(s2)+1);//+1 for the zero-terminator
+    char *result = malloc(strlen(s1)+strlen(s2)+1);
     strcpy(result, s1);
     strcat(result, s2);
     return result;
@@ -40,8 +40,21 @@ void push(node_t ** head, char* alias, char* val) {
     newNode->next = NULL;
     if (current != NULL)
     {
-        while (current->next != NULL) {
+        while (current->next != NULL)
+        {
+            if (strcmp(current->alias, alias) == 0)
+            {
+                current->val = val;
+                free(newNode);
+                return;
+            }
             current = current->next;
+        }
+        if (strcmp(current->alias, alias) == 0)
+        {
+            current->val = val;
+            free(newNode);
+            return;
         }
         current->next = newNode;
     }
@@ -81,7 +94,7 @@ char* retrieve_val(node_t * head, char * alias)
     return NULL;
 }
 
-void print_list(node_t * head)
+void print_alias_list(node_t * head)
 {
     node_t * current = head;
     while (current != NULL)
@@ -160,7 +173,6 @@ int main(int argc, char* argv[])
         char* string;
 }
 %token <string> WORD
-%token <string> VAR
 %%
 commands: /* empty */
         | commands error TERMINATOR { yyerrok; }
@@ -186,8 +198,6 @@ command:
         |
         unalias
         |
-        var
-        |
         word
         |
         ls
@@ -202,6 +212,8 @@ bye:
 setenv:
         SETENV WORD WORD
         {
+                $2 = environment_replace($2);
+                $3 = environment_replace($3);
                 setenv($2, $3, 1);
         }
         ;
@@ -216,6 +228,7 @@ printenv:
 unsetenv:
         UNSETENV WORD
         {
+                $2 = environment_replace($2);
                 unsetenv($2);
         }
         ;
@@ -224,6 +237,7 @@ cd:
         {
                 int ret;
                 int tilde = 0;
+                $2 = environment_replace($2);
                 char *path = $2;
                 if ($2[0] == '~')
                 {
@@ -244,26 +258,24 @@ cd_no_args:
 alias:
         ALIAS WORD WORD
         {
+                $2 = environment_replace($2);
+                $3 = environment_replace($3);
                 push(&alias_head, $2, $3);
         }
         ;
 alias_print:
         ALIAS
         {
-                print_list(alias_head);
+                print_alias_list(alias_head);
         }
 unalias:
         UNALIAS WORD
         {
+                $2 = environment_replace($2);
                 remove_by_alias(&alias_head, $2);
         }
         ;
 /* Testing stuff. Not going to be in the final */
-var:
-        VAR
-        {
-                printf("var: %s\n", $1);
-        }
 word:
         WORD
         {
