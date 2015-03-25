@@ -40,14 +40,8 @@ void push(node_t ** head, char* alias, char* val) {
     newNode->next = NULL;
     if (current != NULL)
     {
-        while (current->next != NULL)
+        while (current->next != NULL && strcmp(current->alias, alias) != 0)
         {
-            if (strcmp(current->alias, alias) == 0)
-            {
-                current->val = val;
-                free(newNode);
-                return;
-            }
             current = current->next;
         }
         if (strcmp(current->alias, alias) == 0)
