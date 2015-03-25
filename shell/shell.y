@@ -110,17 +110,29 @@ char* environment_replace(char* string)
     while(1)
     {
         int valid = 0;
+        int counter = 0;
         int first = -2;
         int last = -2;
         int i;
         for (i=0; i<strlen(s); i++)
         {
             if (s[i] == '$' && first == -2) first = i;
-            if (s[i] == '{' && i == first + 1) valid = 1;
-            if (s[i] == '}' && valid == 1)
+            if (s[i] == '{')
             {
-                last = i;
-                valid = 0;
+                if (i == first + 1) valid = 1;
+                if (valid && i - 1 >= 0 && s[i-1] == '$') counter++;
+            }
+            if (s[i] == '}')
+            {
+                if (valid)
+                {
+                    counter--;
+                    if (counter == 0)
+                    {
+                        last = i;
+                        valid = 0;
+                    }
+                }
             }
         }
         if (first != -2 && last != -2)
