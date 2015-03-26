@@ -3,38 +3,21 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-extern FILE *yyin;
-extern FILE *yyout;
+extern FILE* yyin;
+extern FILE* yyout;
 extern int yylineno;
-extern char **environ;
-void yyerror(const char *str)
-{
-        fprintf(stderr,"error: %s at line %d\n",str,yylineno);
-}
- 
-int yywrap()
-{
-        fclose(yyin);
-        return 1;
-} 
+extern char** environ;
 
-char* concat(char *s1, char *s2)
-{
-    char *result = malloc(strlen(s1)+strlen(s2)+1);
-    strcpy(result, s1);
-    strcat(result, s2);
-    return result;
-}
-
+/*Linked List*/
 typedef struct node {
     char* alias;
     char* val;
-    struct node * next;
+    struct node* next;
 } node_t;
 
-void push(node_t ** head, char* alias, char* val) {
-    node_t * current = *head;
-    node_t * newNode = malloc(sizeof(node_t));
+void push(node_t** head, char* alias, char* val) {
+    node_t* current = *head;
+    node_t* newNode = malloc(sizeof(node_t));
     newNode->alias = alias;
     newNode->val = val;
     newNode->next = NULL;
@@ -59,9 +42,19 @@ void push(node_t ** head, char* alias, char* val) {
     
 }
 
-int remove_by_alias(node_t ** head, char * alias) {
-    node_t * current = *head;
-    node_t * prev = NULL;
+void print_alias_list(node_t* head)
+{
+    node_t* current = head;
+    while (current != NULL)
+    {
+        printf("alias %s='%s'\n", current->alias, current->val);
+        current = current->next;
+    }
+}
+
+int remove_by_alias(node_t** head, char * alias) {
+    node_t* current = *head;
+    node_t* prev = NULL;
     while (1) {
         if (current == NULL) return -1;
         if (strcmp(current->alias, alias) == 0) break;
@@ -74,9 +67,9 @@ int remove_by_alias(node_t ** head, char * alias) {
     return 0;
 }
 
-char* retrieve_val(node_t * head, char * alias)
+char* retrieve_val(node_t* head, char* alias)
 {
-    node_t * current = head;
+    node_t* current = head;
     while (current != NULL)
     {
         if (strcmp(current->alias, alias) == 0)
@@ -88,26 +81,13 @@ char* retrieve_val(node_t * head, char * alias)
     return NULL;
 }
 
-void print_alias_list(node_t * head)
+/*String Functions*/
+char* concat(char* s1, char* s2)
 {
-    node_t * current = head;
-    while (current != NULL)
-    {
-        printf("alias %s='%s'\n", current->alias, current->val);
-        current = current->next;
-    }
-}
-
-char* str_replace_first(char* string, char* substr, char* replacement )
-{
-    char* token = strstr(string, substr);
-    if(token == NULL) return strdup(string);
-    char* replaced_string = malloc(strlen(string) - strlen(substr) + strlen(replacement) + 1);
-    memcpy(replaced_string, string, token - string);
-    memcpy(replaced_string + (token - string), replacement, strlen(replacement));
-    memcpy(replaced_string + (token - string) + strlen(replacement), token + strlen(substr), strlen(string) - strlen(substr) - (token - string));
-    memset(replaced_string + strlen(string) - strlen(substr) + strlen(replacement), 0, 1);
-    return replaced_string;
+    char* result = malloc(strlen(s1)+strlen(s2)+1);
+    strcpy(result, s1);
+    strcat(result, s2);
+    return result;
 }
 
 char* environment_replace(char* string)
@@ -147,9 +127,9 @@ char* environment_replace(char* string)
             char* temp = NULL;
             char subbuff[1000];
             char subbuff2[1000];
-            memcpy( subbuff, &s[first], last - first + 1 );
+            memcpy(subbuff, &s[first], last - first + 1);
             subbuff[last - first + 1] = '\0';
-            memcpy( subbuff2, &s[first+2], last - first - 2 );
+            memcpy(subbuff2, &s[first+2], last - first - 2);
             subbuff2[last - first - 2] = '\0';
             if (control != 0) temp = s;
             if (getenv(subbuff2) != NULL) s = str_replace_first(s, subbuff, getenv(subbuff2));
@@ -162,7 +142,31 @@ char* environment_replace(char* string)
     return s;
 }
 
-node_t * alias_head;
+char* str_replace_first(char* string, char* substr, char* replacement )
+{
+    char* token = strstr(string, substr);
+    if(token == NULL) return strdup(string);
+    char* replaced_string = malloc(strlen(string) - strlen(substr) + strlen(replacement) + 1);
+    memcpy(replaced_string, string, token - string);
+    memcpy(replaced_string + (token - string), replacement, strlen(replacement));
+    memcpy(replaced_string + (token - string) + strlen(replacement), token + strlen(substr), strlen(string) - strlen(substr) - (token - string));
+    memset(replaced_string + strlen(string) - strlen(substr) + strlen(replacement), 0, 1);
+    return replaced_string;
+}
+
+/*YACC YACC YACC*/
+void yyerror(const char *str)
+{
+        fprintf(stderr,"error: %s at line %d\n",str,yylineno);
+}
+
+int yywrap()
+{
+        fclose(yyin);
+        return 1;
+}
+
+node_t* alias_head;
 int main(int argc, char* argv[])
 {       
         alias_head = NULL;
@@ -290,6 +294,6 @@ word:
 ls:
         LS
         {
-            system("ls");
+                system("ls");
         }
 %%
