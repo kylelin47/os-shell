@@ -98,15 +98,15 @@ void print_alias_list(node_t * head)
     }
 }
 
-char* str_replace(char* string, char* substr, char* replacement )
+char* str_replace_first(char* string, char* substr, char* replacement )
 {
-    char* tok = strstr( string, substr );
-    if( tok == NULL ) return strdup( string );
-    char* replaced_string = malloc( strlen( string ) - strlen( substr ) + strlen( replacement ) + 1 );
-    memcpy( replaced_string, string, tok - string );
-    memcpy( replaced_string + (tok - string), replacement, strlen( replacement ) );
-    memcpy( replaced_string + (tok - string) + strlen( replacement ), tok + strlen( substr ), strlen( string ) - strlen( substr ) - ( tok - string ) );
-    memset( replaced_string + strlen( string ) - strlen( substr ) + strlen( replacement ), 0, 1 );
+    char* token = strstr(string, substr);
+    if(token == NULL) return strdup(string);
+    char* replaced_string = malloc(strlen(string) - strlen(substr) + strlen(replacement) + 1);
+    memcpy(replaced_string, string, token - string);
+    memcpy(replaced_string + (token - string), replacement, strlen(replacement));
+    memcpy(replaced_string + (token - string) + strlen(replacement), token + strlen(substr), strlen(string) - strlen(substr) - (token - string));
+    memset(replaced_string + strlen(string) - strlen(substr) + strlen(replacement), 0, 1);
     return replaced_string;
 }
 
@@ -152,8 +152,8 @@ char* environment_replace(char* string)
             memcpy( subbuff2, &s[first+2], last - first - 2 );
             subbuff2[last - first - 2] = '\0';
             if (control != 0) temp = s;
-            if (getenv(subbuff2) != NULL) s = str_replace(s, subbuff, getenv(subbuff2));
-            else s = str_replace(s, subbuff, subbuff2);
+            if (getenv(subbuff2) != NULL) s = str_replace_first(s, subbuff, getenv(subbuff2));
+            else s = str_replace_first(s, subbuff, subbuff2);
             free(temp);
             control++;
         }
