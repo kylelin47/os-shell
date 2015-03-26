@@ -90,6 +90,18 @@ char* concat(char* s1, char* s2)
     return result;
 }
 
+char* str_replace_first(char* string, char* substr, char* replacement)
+{
+    char* token = strstr(string, substr);
+    if(token == NULL) return strdup(string);
+    char* replaced_string = malloc(strlen(string) - strlen(substr) + strlen(replacement) + 1);
+    memcpy(replaced_string, string, token - string);
+    memcpy(replaced_string + (token - string), replacement, strlen(replacement));
+    memcpy(replaced_string + (token - string) + strlen(replacement), token + strlen(substr), strlen(string) - strlen(substr) - (token - string));
+    memset(replaced_string + strlen(string) - strlen(substr) + strlen(replacement), 0, 1);
+    return replaced_string;
+}
+
 char* environment_replace(char* string)
 {
     char* s = string;
@@ -142,22 +154,10 @@ char* environment_replace(char* string)
     return s;
 }
 
-char* str_replace_first(char* string, char* substr, char* replacement )
-{
-    char* token = strstr(string, substr);
-    if(token == NULL) return strdup(string);
-    char* replaced_string = malloc(strlen(string) - strlen(substr) + strlen(replacement) + 1);
-    memcpy(replaced_string, string, token - string);
-    memcpy(replaced_string + (token - string), replacement, strlen(replacement));
-    memcpy(replaced_string + (token - string) + strlen(replacement), token + strlen(substr), strlen(string) - strlen(substr) - (token - string));
-    memset(replaced_string + strlen(string) - strlen(substr) + strlen(replacement), 0, 1);
-    return replaced_string;
-}
-
 /*YACC YACC YACC*/
 void yyerror(const char *str)
 {
-        fprintf(stderr,"error: %s at line %d\n",str,yylineno);
+        fprintf(stderr,"error: %s at line %d\n", str, yylineno);
 }
 
 int yywrap()
