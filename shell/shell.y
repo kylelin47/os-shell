@@ -154,6 +154,35 @@ char* environment_replace(char* string)
     return s;
 }
 
+/* ARGS Linked List Stuff */
+
+typedef struct args_node {
+    char* arg_str;
+    struct args_node * next;
+} arg_node;
+
+arg_node * arg_head;
+
+void push_arg(char* arg_str) { //this is a push front op
+    arg_node * current = arg_head;
+    arg_node * newNode = malloc(sizeof(arg_node));
+    newNode->arg_str = arg_str;
+    newNode->next = arg_head;
+    arg_head = newNode;
+}
+
+void print_args_list(arg_node * head)
+{
+    arg_node * current = head;
+    while (current != NULL)
+    {
+        printf("%s ", current->arg_str);
+        current = current->next;
+    }
+}
+
+/* end args stuff */
+
 /*YACC YACC YACC*/
 void yyerror(const char *str)
 {
@@ -170,6 +199,7 @@ node_t* alias_head;
 int main(int argc, char* argv[])
 {       
         alias_head = NULL;
+        printf("> ");
         yyparse();
 } 
 
@@ -183,6 +213,7 @@ int main(int argc, char* argv[])
         char* string;
 }
 %token <string> WORD
+%type <arg_node> arg_list
 %%
 commands: /* empty */
         | commands error TERMINATOR { yyerrok; }
@@ -208,10 +239,13 @@ command:
         |
         unalias
         |
+        arg_list
+        |
         word
         |
         ls
         ;
+
 bye:
         BYE
         {
@@ -286,6 +320,13 @@ unalias:
         }
         ;
 /* Testing stuff. Not going to be in the final */
+arg_list:
+    WORD arg_list { $<args_node>$ = malloc(sizeof(struct arg_node));
+                    $<args_node>$->next = $2;
+                    $<args_node>$->arg_str = $1;}
+    WORD          { $$ = malloc(sizeof(struct arg_node));
+                    $$->next = NULL;
+                    $$->arg_str = $1; }
 word:
         WORD
         {
