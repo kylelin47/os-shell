@@ -3,12 +3,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "node.h"
 extern FILE* yyin;
 extern FILE* yyout;
 extern int yylineno;
 extern char** environ;
 
-/*Linked List*/
+/*Alias Linked List*/
 typedef struct node {
     char* alias;
     char* val;
@@ -82,24 +83,16 @@ char* retrieve_val(node_t* head, char* alias)
 }
 
 /*String Functions*/
+char* str_replace_first(char* string, char* substr, char* replacement);
+
+char* alias_replace(char* string);
+
 char* concat(char* s1, char* s2)
 {
     char* result = malloc(strlen(s1)+strlen(s2)+1);
     strcpy(result, s1);
     strcat(result, s2);
     return result;
-}
-
-char* str_replace_first(char* string, char* substr, char* replacement)
-{
-    char* token = strstr(string, substr);
-    if(token == NULL) return strdup(string);
-    char* replaced_string = malloc(strlen(string) - strlen(substr) + strlen(replacement) + 1);
-    memcpy(replaced_string, string, token - string);
-    memcpy(replaced_string + (token - string), replacement, strlen(replacement));
-    memcpy(replaced_string + (token - string) + strlen(replacement), token + strlen(substr), strlen(string) - strlen(substr) - (token - string));
-    memset(replaced_string + strlen(string) - strlen(substr) + strlen(replacement), 0, 1);
-    return replaced_string;
 }
 
 char* environment_replace(char* string)
@@ -116,6 +109,7 @@ char* environment_replace(char* string)
         for (i=0; i<strlen(s); i++)
         {
             if (s[i] == '$' && first == -2) first = i;
+            if (s[i] == '$' && first != -2 && valid == 0) first = i;
             if (s[i] == '{')
             {
                 if (i == first + 1) valid = 1;
@@ -130,6 +124,7 @@ char* environment_replace(char* string)
                     {
                         last = i;
                         valid = 0;
+                        break;
                     }
                 }
             }
@@ -154,13 +149,19 @@ char* environment_replace(char* string)
     return s;
 }
 
+char* str_replace_first(char* string, char* substr, char* replacement)
+{
+    char* token = strstr(string, substr);
+    if(token == NULL) return strdup(string);
+    char* replaced_string = malloc(strlen(string) - strlen(substr) + strlen(replacement) + 1);
+    memcpy(replaced_string, string, token - string);
+    memcpy(replaced_string + (token - string), replacement, strlen(replacement));
+    memcpy(replaced_string + (token - string) + strlen(replacement), token + strlen(substr), strlen(string) - strlen(substr) - (token - string));
+    memset(replaced_string + strlen(string) - strlen(substr) + strlen(replacement), 0, 1);
+    return replaced_string;
+}
+
 /* ARGS Linked List Stuff */
-
-typedef struct args_node {
-    char* arg_str;
-    struct args_node * next;
-} arg_node;
-
 arg_node * arg_head;
 
 void push_arg(char* arg_str) { //this is a push front op
@@ -179,9 +180,30 @@ void print_args_list(arg_node * head)
         printf("%s ", current->arg_str);
         current = current->next;
     }
+    printf("\n");
 }
 
 /* end args stuff */
+
+/* Exec stuff */
+run_command(char* file_name, arg_node* args)
+{
+    file_name = environment_replace(file_name);
+    /* Sometimes, this will expand file_name to a file_name and args.
+       Have to account for this. Search for whitespace, add it to args. 
+       Environment replace all args too. And do aliasing on first arg.*/
+    printf("%s\n", file_name); 
+    print_args_list(args);
+}
+
+run_command_no_args(char* file_name)
+{
+    file_name = environment_replace(file_name);
+    /* Sometimes, this will expand file_name to a file_name and args.
+       Have to account for this. Search for whitespace, add it to args. 
+       Environment replace all args too. And do aliasing on first arg.*/
+    printf("%s\n", file_name); 
+}
 
 /*YACC YACC YACC*/
 void yyerror(const char *str)
@@ -207,19 +229,29 @@ int main(int argc, char* argv[])
 
 %token BYE SETENV PRINTENV UNSETENV CD ALIAS UNALIAS TERMINATOR END_BRACE
 %token LS
-
 %union
 {
         char* string;
+        arg_node* arg_n;
 }
 %token <string> WORD
-%type <arg_node> arg_list
+%type <arg_n> arg_list
 %%
 commands: /* empty */
         | commands error TERMINATOR { yyerrok; }
+        | commands WORD arg_list TERMINATOR { run_command($2, $3); }
+        | commands WORD TERMINATOR { run_command_no_args($2); }
         | commands command TERMINATOR
         ;
 
+arg_list:
+    WORD arg_list { $$ = malloc(sizeof(arg_node));
+                    $$->next = $2;
+                    $$->arg_str = $1;}
+    |
+    WORD          { $$ = malloc(sizeof(arg_node));
+                    $$->next = NULL;
+                    $$->arg_str = $1; }
 command:
         bye
         |
@@ -238,10 +270,6 @@ command:
         alias_print
         |
         unalias
-        |
-        arg_list
-        |
-        word
         |
         ls
         ;
@@ -320,18 +348,6 @@ unalias:
         }
         ;
 /* Testing stuff. Not going to be in the final */
-arg_list:
-    WORD arg_list { $<args_node>$ = malloc(sizeof(struct arg_node));
-                    $<args_node>$->next = $2;
-                    $<args_node>$->arg_str = $1;}
-    WORD          { $$ = malloc(sizeof(struct arg_node));
-                    $$->next = NULL;
-                    $$->arg_str = $1; }
-word:
-        WORD
-        {
-                printf("word: %s\n", $1);
-        }
 ls:
         LS
         {
