@@ -18,7 +18,6 @@ cd                      return CD;
 alias                   return ALIAS;
 unalias                 return UNALIAS;
 ls                      return LS;
-\}                      return END_BRACE;
 \"(?:[^"\\]|\\.)*\"     {yylval.string = (char*)calloc(strlen(yytext)-1, sizeof(char));
                         strncpy(yylval.string, &yytext[1], strlen(yytext)-2); return WORD;}
 ["$"\{\}~./\-a-zA-Z0-9]* yylval.string=strdup(yytext); return WORD;
