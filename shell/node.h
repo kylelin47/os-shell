@@ -188,10 +188,9 @@ void print_args_list(arg_node * head)
     arg_node * current = head;
     while (current != NULL)
     {
-        printf("%s ", current->arg_str);
+        printf("%s\n", current->arg_str);
         current = current->next;
     }
-    printf("\n");
 }
 
 /* end args stuff */
@@ -199,9 +198,6 @@ void print_args_list(arg_node * head)
 /* Exec stuff */
 run_command(arg_node* args)
 {
-    /* Sometimes, this will expand file_name to a file_name and args.
-       Have to account for this. Search for whitespace, add it to args. 
-       Environment replace all args too. And do aliasing on first arg.*/
     print_args_list(args);
 }
 #endif

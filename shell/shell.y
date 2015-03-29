@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 
 %}
 
-%token BYE SETENV PRINTENV UNSETENV CD ALIAS UNALIAS TERMINATOR PIPE
+%token BYE SETENV PRINTENV UNSETENV CD ALIAS UNALIAS TERMINATOR
 %token LS
 %union
 {
@@ -58,6 +58,8 @@ arg_list:
                      arg_node* current = $1;
                      while (current->next != NULL) current = current->next;
                      current->next = $2;}
+    |
+    ARGS          { $$ = $1; }
     |
     WORD          { $$ = malloc(sizeof(arg_node));
                     $$->next = NULL;
