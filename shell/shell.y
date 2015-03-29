@@ -43,18 +43,12 @@ commands: /* empty */
         | commands arg_list TERMINATOR { run_command($2); }
         | commands command TERMINATOR
         ;
-arg_list_list:
-    arg_list arg_list_list:
-    |
-    arg_list
-    ;
 arg_list:
     WORD arg_list { $$ = malloc(sizeof(arg_node));
                     $$->next = $2;
                     $$->arg_str = $1;}
     |
-    ARGS arg_list {  run_command($1);
-                     $$ = $1;
+    ARGS arg_list {  $$ = $1;
                      arg_node* current = $1;
                      while (current->next != NULL) current = current->next;
                      current->next = $2;}
