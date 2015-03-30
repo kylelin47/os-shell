@@ -218,7 +218,7 @@ arg_node* split_to_tokens(char* string)
 /* end args stuff */
 
 /* Exec stuff */
-run_command(arg_node* args)
+arg_node* nested_alias_replace(arg_node* args)
 {
     int n = 0;
     while(n < 1000)
@@ -239,7 +239,7 @@ run_command(arg_node* args)
         else break;
         n++;
     }
-    if (n != 1000) print_args_list(args);
+    if (n != 1000) return args;
     else
     {
         printf("Infinite alias expansion at line %d\n", yylineno);
@@ -250,7 +250,13 @@ run_command(arg_node* args)
             args = args->next;
             free(prev);
         }
+        return NULL;
     }
+}
+void run_command(arg_node* args)
+{
+    args = nested_alias_replace(args);
+    if (args != NULL) print_args_list(args);
 }
 /*YACC YACC YACC*/
 void yyerror(const char *str)
