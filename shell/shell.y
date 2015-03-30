@@ -194,6 +194,18 @@ void print_args_list(arg_node * head)
     }
 }
 
+int get_args_list_size(arg_node * head)
+{
+    arg_node * current = head;
+    int counter = 0;
+    while (current != NULL)
+    {
+        counter++;
+        current = current->next;
+    }
+    return counter;
+}
+
 arg_node* split_to_tokens(char* string)
 {
     char* token;
@@ -257,11 +269,42 @@ arg_node* nested_alias_replace(arg_node* args)
         return NULL;
     }
 }
+
 void run_command(arg_node* args)
 {
     args = nested_alias_replace(args);
     if (args != NULL) print_args_list(args);
+    
+    //check if the command is accessible/executable
+    if ( access( args->arg_str, F_OK|X_OK ) == 0 ) {
+        //can be executed
+        char *envp[] = { NULL };
+        int arg_size = get_args_list_size(args);
+        char *argv[ arg_size+1 ];
+        int i = 0;
+        arg_node* current = args;
+        for (i = 0; i < arg_size; i++) {
+            argv[i] = current->arg_str;
+            current = current->next;
+        }
+        argv[arg_size] = NULL; //null terminated bruh
+
+        printf("Command %s can be executed.\n", args->arg_str);
+        int childPID = fork();
+        if ( childPID == 0 ) {
+            //child process
+            execve( args->arg_str, argv, envp );
+            perror("execve");
+        }
+        
+        
+
+
+    } else {
+        printf("error: command '%s' unable to be executed.\n", args->arg_str);
+    }
 }
+
 /*YACC YACC YACC*/
 void yyerror(const char *str)
 {
