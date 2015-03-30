@@ -221,26 +221,36 @@ arg_node* split_to_tokens(char* string)
 run_command(arg_node* args)
 {
     int n = 0;
-    while(n < 1001)
+    while(n < 1000)
     {
         arg_node* original = args;
-        if (n == 1000)
+        while(args->arg_str != alias_replace(args->arg_str))
         {
-            printf("Infinite alias expansion at line %d\n", yylineno);
-            break;
+            args->arg_str = alias_replace(args->arg_str);
         }
-        args->arg_str = alias_replace(args->arg_str);
         if (has_whitespace(args->arg_str))
         {
             args = split_to_tokens(args->arg_str);
             arg_node* current = args;
             while (current->next != NULL) current = current->next;
             current->next = original->next;
+            free(original);
         }
         else break;
         n++;
     }
     if (n != 1000) print_args_list(args);
+    else
+    {
+        printf("Infinite alias expansion at line %d\n", yylineno);
+        arg_node* prev = NULL;
+        while (args != NULL)
+        {
+            prev = args;
+            args = args->next;
+            free(prev);
+        }
+    }
 }
 /*YACC YACC YACC*/
 void yyerror(const char *str)
