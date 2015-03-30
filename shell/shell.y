@@ -11,6 +11,7 @@ typedef struct node {
     char* val;
     struct node* next;
 } node_t;
+node_t* alias_head;
 
 void push(node_t** head, char* alias, char* val) {
     node_t* current = *head;
@@ -81,7 +82,12 @@ char* retrieve_val(node_t* head, char* alias)
 /*String Functions*/
 char* str_replace_first(char* string, char* substr, char* replacement);
 
-char* alias_replace(char* string);
+char* alias_replace(char* alias)
+{
+    char* val = retrieve_val(alias_head, alias);
+    if (val != NULL) return val;
+    return alias;
+}
 
 char* concat(char* s1, char* s2)
 {
@@ -188,12 +194,53 @@ void print_args_list(arg_node * head)
     }
 }
 
+arg_node* split_to_tokens(char* string)
+{
+    char* token;
+    char* tmp = strdup(string);
+    token = strtok(tmp, " \t");
+    arg_node* head = malloc(sizeof(arg_node));
+    head->next = NULL;
+    head->arg_str = token;
+    arg_node* current = head;
+    token = strtok(NULL, " \t"); 
+    while (token != NULL)
+    {
+          current->next = malloc(sizeof(arg_node));
+          current = current->next;
+          current->arg_str = token;
+          current->next = NULL;  
+          token = strtok(NULL, " \t"); 
+    }
+    return head;
+}
+
 /* end args stuff */
 
 /* Exec stuff */
 run_command(arg_node* args)
 {
-    print_args_list(args);
+    int n = 0;
+    while(n < 1001)
+    {
+        arg_node* original = args;
+        if (n == 1000)
+        {
+            printf("Infinite alias expansion at line %d\n", yylineno);
+            break;
+        }
+        args->arg_str = alias_replace(args->arg_str);
+        if (has_whitespace(args->arg_str))
+        {
+            args = split_to_tokens(args->arg_str);
+            arg_node* current = args;
+            while (current->next != NULL) current = current->next;
+            current->next = original->next;
+        }
+        else break;
+        n++;
+    }
+    if (n != 1000) print_args_list(args);
 }
 /*YACC YACC YACC*/
 void yyerror(const char *str)
@@ -207,7 +254,6 @@ int yywrap()
         return 1;
 }
 
-node_t* alias_head;
 int main(int argc, char* argv[])
 {       
         alias_head = NULL;

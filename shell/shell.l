@@ -27,22 +27,7 @@ ls                      return LS;
                           yylval.string=environment_replace(yylval.string);
                           if (has_whitespace(yylval.string))
                           {
-                                  char *token;
-                                  token = strtok(yylval.string, " \t");
-                                  arg_node* head = malloc(sizeof(arg_node));
-                                  head->next = NULL;
-                                  head->arg_str = token;
-                                  yylval.arg_n = head;
-                                  arg_node* current = head;
-                                  token = strtok(NULL, " \t"); 
-                                  while (token != NULL)
-                                  {
-                                          current->next = malloc(sizeof(arg_node));
-                                          current = current->next;
-                                          current->arg_str = token;
-                                          current->next = NULL;  
-                                          token = strtok(NULL, " \t"); 
-                                  }
+                                  yylval.arg_n = split_to_tokens(yylval.string);
                                   return ARGS;
                           }
                           return WORD;}
