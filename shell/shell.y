@@ -161,6 +161,16 @@ int has_whitespace(char* string)
     return 0;
 }
 
+int has_character(char* string, char ch)
+{
+    int i;
+    for (i = 0; i < strlen(string); i++)
+    {
+        if (string[i] == ch) return 1;
+    }
+    return 0;
+}
+
 char* str_replace_first(char* string, char* substr, char* replacement)
 {
     char* token = strstr(string, substr);
@@ -206,27 +216,26 @@ int get_args_list_size(arg_node * head)
     return counter;
 }
 
-arg_node* split_to_tokens(char* string)
+arg_node* split_to_tokens(char* string, char* delimiter)
 {
     char* token;
     char* tmp = strdup(string);
-    token = strtok(tmp, " \t");
+    token = strtok(tmp, delimiter);
     arg_node* head = malloc(sizeof(arg_node));
     head->next = NULL;
     head->arg_str = token;
     arg_node* current = head;
-    token = strtok(NULL, " \t"); 
+    token = strtok(NULL, delimiter); 
     while (token != NULL)
     {
           current->next = malloc(sizeof(arg_node));
           current = current->next;
           current->arg_str = token;
           current->next = NULL;  
-          token = strtok(NULL, " \t"); 
+          token = strtok(NULL, delimiter); 
     }
     return head;
 }
-
 /* end args stuff */
 
 /* Exec stuff */
@@ -246,7 +255,7 @@ arg_node* nested_alias_replace(arg_node* args)
         if (n2 == 1000) break;
         if (has_whitespace(args->arg_str))
         {
-            args = split_to_tokens(args->arg_str);
+            args = split_to_tokens(args->arg_str, " \t");
             arg_node* current = args;
             while (current->next != NULL) current = current->next;
             current->next = original->next;
@@ -258,7 +267,7 @@ arg_node* nested_alias_replace(arg_node* args)
     if (n != 1000 && n2 != 1000) return args;
     else
     {
-        printf("Infinite alias expansion at line %d\n", yylineno);
+        printf("error at line %d: infinite alias expansion\n", yylineno);
         arg_node* prev = NULL;
         while (args != NULL)
         {
@@ -273,6 +282,43 @@ arg_node* nested_alias_replace(arg_node* args)
 void run_command(arg_node* args)
 {
     args = nested_alias_replace(args);
+    /* Search on path if not path to file given */
+    if (!has_character(args->arg_str, '/'))
+    {
+        char* path = getenv("PATH");
+        arg_node* paths = split_to_tokens(path, ":");
+        arg_node* current_path = paths;
+        char* fname;
+        int found = 0;
+        while (current_path != NULL && found == 0)
+        {
+            char* temp = concat(current_path->arg_str, "/");
+            fname = concat(temp, args->arg_str);
+            free(temp);
+            if( access( fname, F_OK ) != -1 )
+            {
+                found = 1;
+                args->arg_str = fname;
+            }
+            else
+            {
+                free(fname);
+            }
+            current_path = current_path->next;
+        }
+        if (found == 0)
+        {
+            printf("error at line %d: command %s not found\n", yylineno, args->arg_str);
+        }
+    }
+    else
+    {
+        if( access( args->arg_str, F_OK ) == -1 )
+        {
+            printf("error at line %d: command %s not found\n", yylineno, args->arg_str);
+        }
+    }
+    
     if (args != NULL) print_args_list(args);
     
     //check if the command is accessible/executable
@@ -296,9 +342,6 @@ void run_command(arg_node* args)
             execve( args->arg_str, argv, envp );
             perror("execve");
         }
-        
-        
-
 
     } else {
         printf("error: command '%s' unable to be executed.\n", args->arg_str);
@@ -327,7 +370,6 @@ int main(int argc, char* argv[])
 %}
 
 %token BYE SETENV PRINTENV UNSETENV CD ALIAS UNALIAS TERMINATOR
-%token LS
 %union
 {
         char* string;
@@ -376,8 +418,6 @@ command:
         alias_print
         |
         unalias
-        |
-        ls
         ;
 
 bye:
@@ -446,10 +486,4 @@ unalias:
                 remove_by_alias(&alias_head, $2);
         }
         ;
-/* Testing stuff. Not going to be in the final */
-ls:
-        LS
-        {
-                system("ls");
-        }
 %%
