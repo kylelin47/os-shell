@@ -282,8 +282,9 @@ arg_node* nested_alias_replace(arg_node* args)
 void run_command(arg_node* args)
 {
     args = nested_alias_replace(args);
+    if (args == NULL) return; //infinite alias expansion
     /* Search on path if not path to file given */
-    if (!has_character(args->arg_str, '/'))
+    if ( !has_character(args->arg_str, '/') )
     {
         char* path = getenv("PATH");
         arg_node* paths = split_to_tokens(path, ":");
@@ -309,17 +310,19 @@ void run_command(arg_node* args)
         if (found == 0)
         {
             printf("error at line %d: command %s not found\n", yylineno, args->arg_str);
+            return;
         }
     }
     else
     {
-        if( access( args->arg_str, F_OK ) == -1 )
+        if( access( args->arg_str, F_OK|X_OK ) != 0 )
         {
             printf("error at line %d: command %s not found\n", yylineno, args->arg_str);
+            return;
         }
     }
     
-    if (args != NULL) print_args_list(args);
+    //if (args != NULL) print_args_list(args);
     
     //check if the command is accessible/executable
     if ( access( args->arg_str, F_OK|X_OK ) == 0 ) {
@@ -327,9 +330,14 @@ void run_command(arg_node* args)
         char *envp[] = { NULL };
         int arg_size = get_args_list_size(args);
         char *argv[ arg_size+1 ];
+        char* input_file;
+        char* output_file;
         int i = 0;
         arg_node* current = args;
         for (i = 0; i < arg_size; i++) {
+            if (argv[i] == ">") { //new 
+
+            }
             argv[i] = current->arg_str;
             current = current->next;
         }
@@ -342,9 +350,8 @@ void run_command(arg_node* args)
             execve( args->arg_str, argv, envp );
             perror("execve");
         }
-
     } else {
-        printf("error: command '%s' unable to be executed.\n", args->arg_str);
+        printf("error at line %d: command '%s' unable to be executed.\n", yylineno, args->arg_str);
     }
 }
 
