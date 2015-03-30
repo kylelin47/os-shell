@@ -230,13 +230,17 @@ arg_node* split_to_tokens(char* string, char* delimiter)
 arg_node* nested_alias_replace(arg_node* args)
 {
     int n = 0;
+    int n2 = 0;
     while(n < 1000)
     {
         arg_node* original = args;
-        while(args->arg_str != alias_replace(args->arg_str))
+        n2 = 0;
+        while(args->arg_str != alias_replace(args->arg_str) && n2 < 1000)
         {
             args->arg_str = alias_replace(args->arg_str);
+            n2++;
         }
+        if (n2 == 1000) break;
         if (has_whitespace(args->arg_str))
         {
             args = split_to_tokens(args->arg_str, " \t");
@@ -248,7 +252,7 @@ arg_node* nested_alias_replace(arg_node* args)
         else break;
         n++;
     }
-    if (n != 1000) return args;
+    if (n != 1000 && n2 != 1000) return args;
     else
     {
         printf("error at line %d: infinite alias expansion\n", yylineno);
