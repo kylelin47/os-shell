@@ -166,7 +166,7 @@ int has_character(char* string, char ch)
     int i;
     for (i = 0; i < strlen(string); i++)
     {
-        if (string[i] == char) return 1;
+        if (string[i] == ch) return 1;
     }
     return 0;
 }
@@ -270,7 +270,7 @@ void run_command(arg_node* args)
 {
     args = nested_alias_replace(args);
     /* Search on path if not path to file given */
-    if (!has_character(args->arg_str, '/')
+    if (!has_character(args->arg_str, '/'))
     {
         char* path = getenv("PATH");
         arg_node* paths = split_to_tokens(path, ":");
@@ -279,7 +279,9 @@ void run_command(arg_node* args)
         int found = 0;
         while (current_path != NULL && found == 0)
         {
-            fname = concat(current_path->arg_str, args->arg_str);
+            char* temp = concat(current_path->arg_str, "/");
+            fname = concat(temp, args->arg_str);
+            free(temp);
             if( access( fname, F_OK ) != -1 )
             {
                 found = 1;
@@ -291,12 +293,19 @@ void run_command(arg_node* args)
             }
             current_path = current_path->next;
         }
-        
+        if (found == 0)
+        {
+            printf("error at line %d: command %s not found\n", yylineno, args->arg_str);
+        }
     }
-    if( access( args->arg_str, F_OK ) != -1 )
+    else
     {
-        printf("error at line %d: command not found\n", %d);
+        if( access( args->arg_str, F_OK ) == -1 )
+        {
+            printf("error at line %d: command %s not found\n", yylineno, args->arg_str);
+        }
     }
+    
     if (args != NULL) print_args_list(args);
 }
 /*YACC YACC YACC*/
@@ -321,7 +330,6 @@ int main(int argc, char* argv[])
 %}
 
 %token BYE SETENV PRINTENV UNSETENV CD ALIAS UNALIAS TERMINATOR
-%token LS
 %union
 {
         char* string;
@@ -370,8 +378,6 @@ command:
         alias_print
         |
         unalias
-        |
-        ls
         ;
 
 bye:
@@ -440,10 +446,4 @@ unalias:
                 remove_by_alias(&alias_head, $2);
         }
         ;
-/* Testing stuff. Not going to be in the final */
-ls:
-        LS
-        {
-                system("ls");
-        }
 %%
