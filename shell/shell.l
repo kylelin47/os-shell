@@ -23,7 +23,7 @@ ls                      return LS;
                         yylval.string = environment_replace(yylval.string);
                         if (temp != yylval.string) free(temp);
                         return WORD;}
-["$"\{\}~./\-a-zA-Z0-9]* {yylval.string=strdup(yytext);
+[\\\*\?"$"\{\}~./\-a-zA-Z0-9|_&><]* {yylval.string=strdup(yytext);
                           yylval.string=environment_replace(yylval.string);
                           if (has_whitespace(yylval.string))
                           {
@@ -43,7 +43,6 @@ ls                      return LS;
                                           current->next = NULL;  
                                           token = strtok(NULL, " \t"); 
                                   }
-                                  free(yylval.string);
                                   return ARGS;
                           }
                           return WORD;}
