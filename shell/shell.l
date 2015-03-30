@@ -23,11 +23,11 @@ ls                      return LS;
                         yylval.string = environment_replace(yylval.string);
                         if (temp != yylval.string) free(temp);
                         return WORD;}
-[\\\*\?"$"\{\}~./\-a-zA-Z0-9|_&><]* {yylval.string=strdup(yytext);
+[\\\*\?"$"\{\}~./\-a-zA-Z0-9|_&><\"]* {yylval.string=strdup(yytext);
                           yylval.string=environment_replace(yylval.string);
                           if (has_whitespace(yylval.string))
                           {
-                                  yylval.arg_n = split_to_tokens(yylval.string);
+                                  yylval.arg_n = split_to_tokens(yylval.string, " \t");
                                   return ARGS;
                           }
                           return WORD;}
