@@ -283,6 +283,12 @@ void run_command(arg_node* args)
 {
     args = nested_alias_replace(args);
     if (args == NULL) return; //infinite alias expansion
+    char* original = args->arg_str;
+    if (args->arg_str[0] == '~')
+    {
+        args->arg_str++;
+        args->arg_str = concat(getenv("HOME"), args->arg_str);
+    }
     /* Search on path if not path to file given */
     if ( !has_character(args->arg_str, '/') )
     {
