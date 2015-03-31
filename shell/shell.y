@@ -171,6 +171,17 @@ int has_character(char* string, char ch)
     return 0;
 }
 
+void replace_escape(char* str)
+{
+    char* p_read = str;
+    char* p_write = str;
+    while (*p_read) {
+        *p_write = *p_read++;
+        p_write += (*p_write != '\\' || *(p_write + 1) == '\\');
+    }
+    *p_write = '\0';
+}
+
 char* str_replace_first(char* string, char* substr, char* replacement)
 {
     char* token = strstr(string, substr);

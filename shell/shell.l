@@ -20,17 +20,20 @@ unalias                 return UNALIAS;
                         strncpy(yylval.string, &yytext[1], strlen(yytext)-2);
                         char* temp = yylval.string;
                         yylval.string = environment_replace(yylval.string);
+                        replace_escape(yylval.string);
                         if (temp != yylval.string) free(temp);
                         return WORD;}
-[^ \t\r\n\v\f]* {yylval.string=strdup(yytext);
-                          yylval.string=environment_replace(yylval.string);
-                          if (has_whitespace(yylval.string))
-                          {
-                                  yylval.arg_n = split_to_tokens(yylval.string, " \t");
+[^ \t\r\n\v\f;]*        {char* text=strdup(yytext);
+                         text=environment_replace(text);
+                         replace_escape(text);
+                         if (has_whitespace(text))
+                         {
+                                  yylval.arg_n = split_to_tokens(text, " \t");
                                   return ARGS;
-                          }
-                          return WORD;}
-\n                      return TERMINATOR;
+                         }
+                         yylval.string = text;
+                         return WORD;}
 ;                       return TERMINATOR;
+\n                      return TERMINATOR;
 [ \t]+                  /* ignore whitespace */;
 %%
