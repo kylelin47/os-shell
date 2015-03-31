@@ -184,14 +184,11 @@ char* str_replace_first(char* string, char* substr, char* replacement)
 }
 
 /* ARGS Linked List Stuff */
-arg_node * arg_head;
-
-void push_arg(char* arg_str) { //this is a push front op
-    arg_node * current = arg_head;
+void push_arg(arg_node** head, char* arg_str) { //this is a push front op
     arg_node * newNode = malloc(sizeof(arg_node));
     newNode->arg_str = arg_str;
-    newNode->next = arg_head;
-    arg_head = newNode;
+    newNode->next = *head;
+    *head = newNode;
 }
 
 void print_args_list(arg_node * head)
@@ -273,7 +270,7 @@ arg_node* nested_alias_replace(arg_node* args)
     if (n != 1000 && n2 != 1000) return args;
     else
     {
-        printf("error at line %d: infinite alias expansion\n", yylineno);
+        fprintf(stderr, "error at line %d: infinite alias expansion\n", yylineno);
         arg_node* prev = NULL;
         while (args != NULL)
         {
@@ -289,6 +286,12 @@ void run_command(arg_node* args)
 {
     args = nested_alias_replace(args);
     if (args == NULL) return; //infinite alias expansion
+    char* original = args->arg_str;
+    if (args->arg_str[0] == '~')
+    {
+        args->arg_str++;
+        args->arg_str = concat(getenv("HOME"), args->arg_str);
+    }
     /* Search on path if not path to file given */
     if ( !has_character(args->arg_str, '/') )
     {
@@ -315,7 +318,7 @@ void run_command(arg_node* args)
         }
         if (found == 0)
         {
-            printf("error at line %d: command %s not found\n", yylineno, args->arg_str);
+            fprintf(stderr, "error at line %d: command '%s' not found\n", yylineno, args->arg_str);
             return;
         }
     }
@@ -323,7 +326,7 @@ void run_command(arg_node* args)
     {
         if( access( args->arg_str, F_OK|X_OK ) != 0 )
         {
-            printf("error at line %d: command %s not found\n", yylineno, args->arg_str);
+            fprintf(stderr, "error at line %d: command '%s' not found\n", yylineno, args->arg_str);
             return;
         }
     }
@@ -397,7 +400,7 @@ void run_command(arg_node* args)
             perror("execve");
         }
     } else {
-        printf("error at line %d: command '%s' unable to be executed.\n", yylineno, args->arg_str);
+        fprintf(stderr, "error at line %d: command '%s' unable to be executed.\n", yylineno, args->arg_str);
     }
 }
 
@@ -513,7 +516,7 @@ cd:
                         tilde = 1;
                 }
                 ret = chdir(path);
-                if (ret != 0) printf("Path %s not found\n", path);
+                if (ret != 0) fprintf(stderr, "error: path '%s' not found\n", path);
                 if (tilde == 1) free(path);
         }
         ;
