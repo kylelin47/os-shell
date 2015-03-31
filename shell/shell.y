@@ -184,14 +184,11 @@ char* str_replace_first(char* string, char* substr, char* replacement)
 }
 
 /* ARGS Linked List Stuff */
-arg_node * arg_head;
-
-void push_arg(char* arg_str) { //this is a push front op
-    arg_node * current = arg_head;
+void push_arg(arg_node** head, char* arg_str) { //this is a push front op
     arg_node * newNode = malloc(sizeof(arg_node));
     newNode->arg_str = arg_str;
-    newNode->next = arg_head;
-    arg_head = newNode;
+    newNode->next = *head;
+    *head = newNode;
 }
 
 void print_args_list(arg_node * head)
@@ -473,7 +470,7 @@ cd:
                         tilde = 1;
                 }
                 ret = chdir(path);
-                if (ret != 0) printf("Path %s not found\n", path);
+                if (ret != 0) fprintf(stderr, "error: path '%s' not found\n", path);
                 if (tilde == 1) free(path);
         }
         ;
