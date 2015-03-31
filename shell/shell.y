@@ -267,7 +267,7 @@ arg_node* nested_alias_replace(arg_node* args)
     if (n != 1000 && n2 != 1000) return args;
     else
     {
-        printf("error at line %d: infinite alias expansion\n", yylineno);
+        fprintf(stderr, "error at line %d: infinite alias expansion\n", yylineno);
         arg_node* prev = NULL;
         while (args != NULL)
         {
@@ -315,7 +315,7 @@ void run_command(arg_node* args)
         }
         if (found == 0)
         {
-            printf("error at line %d: command %s not found\n", yylineno, args->arg_str);
+            fprintf(stderr, "error at line %d: command '%s' not found\n", yylineno, args->arg_str);
             return;
         }
     }
@@ -323,7 +323,7 @@ void run_command(arg_node* args)
     {
         if( access( args->arg_str, F_OK|X_OK ) != 0 )
         {
-            printf("error at line %d: command %s not found\n", yylineno, args->arg_str);
+            fprintf(stderr, "error at line %d: command '%s' not found\n", yylineno, args->arg_str);
             return;
         }
     }
@@ -357,7 +357,7 @@ void run_command(arg_node* args)
             perror("execve");
         }
     } else {
-        printf("error at line %d: command '%s' unable to be executed.\n", yylineno, args->arg_str);
+        fprintf(stderr, "error at line %d: command '%s' unable to be executed.\n", yylineno, args->arg_str);
     }
 }
 
