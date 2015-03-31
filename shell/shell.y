@@ -210,8 +210,14 @@ int get_args_list_size(arg_node * head)
     int counter = 0;
     while (current != NULL)
     {
-        counter++;
-        current = current->next;
+        if (strcmp(current->arg_str, ">") != 0 &&
+            strcmp(current->arg_str, "<") != 0 &&
+            strcmp(current->arg_str, "|") != 0 &&
+            (current->arg_str[0]!='2' && current->arg_str[1]!='>') ) {
+                counter++;
+                current = current->next; 
+        }
+        else break;
     }
     return counter;
 }
@@ -328,25 +334,65 @@ void run_command(arg_node* args)
     if ( access( args->arg_str, F_OK|X_OK ) == 0 ) {
         //can be executed
         char *envp[] = { NULL };
-        int arg_size = get_args_list_size(args);
+        int arg_size = get_args_list_size(args)+1;
         char *argv[ arg_size+1 ];
-        char* input_file;
-        char* output_file;
+        char* input_file = "";
+        char* output_file = "";
+        char* err_file = "";
+        char* curr_arg;
         int i = 0;
         arg_node* current = args;
-        for (i = 0; i < arg_size; i++) {
-            if (argv[i] == ">") { //new 
-
-            }
-            argv[i] = current->arg_str;
+        while(current != NULL) {
+            curr_arg = current->arg_str;
+            if (i<arg_size-1) {argv[i] = curr_arg;} //get args before >,<,|,etc
             current = current->next;
+            i++;
+            //printf("curr %s\n", curr_arg );
+            if (strcmp(curr_arg, ">") == 0) { //new file for output
+                output_file = current->arg_str;
+                current = current->next;
+                i++;
+            } else if (strcmp(curr_arg, "<") == 0) {//new file for input
+                input_file = current->arg_str;
+                current = current->next;
+                i++;
+            } else if (strcmp(curr_arg, "2>$1") == 0) {
+                //set std err to std out
+                
+            } else if (curr_arg[0]=='2' && curr_arg[1]=='>') {
+                //set std err to another file
+                int k = 0;
+                char errf[strlen(curr_arg) - 2];
+                for(k = 0; k < strlen(curr_arg)-2; k++) {
+                    errf[k] = curr_arg[k+2];
+                }
+                err_file = concat("", errf);
+            }
         }
-        argv[arg_size] = NULL; //null terminated bruh
+        argv[arg_size-1] = NULL; //null terminated bruh
 
-        printf("Command %s can be executed.\n", args->arg_str);
+        //printf("Command %s can be executed.\n", args->arg_str);
         int childPID = fork();
         if ( childPID == 0 ) {
             //child process
+            if (input_file != "") {
+                printf("input: %s\n", input_file);
+                FILE *fp_in = fopen(input_file, "a+");
+                dup2(fileno(fp_in), STDIN_FILENO);
+                fclose(fp_in);
+            }
+            if (err_file != "") {
+                printf("err: %s\n", err_file);
+                FILE *fp_err = fopen(err_file, "a+");
+                dup2(fileno(fp_err), STDERR_FILENO);
+                fclose(fp_err);
+            }
+            if (output_file != "") {
+                printf("output: %s\n", output_file);
+                FILE *fp_out = fopen(output_file, "a+");
+                dup2(fileno(fp_out), STDOUT_FILENO);
+                fclose(fp_out);
+            }
             execve( args->arg_str, argv, envp );
             perror("execve");
         }
