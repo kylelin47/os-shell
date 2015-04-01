@@ -353,6 +353,7 @@ void run_command(arg_node* args)
         char* input_file = "";
         char* output_file = "";
         char* err_file = "";
+        int errisstdout = 0;
         char* curr_arg;
         int wait_for_comp = 1;
         int i = 0;
@@ -373,7 +374,7 @@ void run_command(arg_node* args)
                 i++;
             } else if (strcmp(curr_arg, "2>$1") == 0) {
                 //set std err to std out
-                
+                errisstdout = 1;
             } else if (curr_arg[0]=='2' && curr_arg[1]=='>') {
                 //set std err to another file
                 int k = 0;
@@ -404,6 +405,9 @@ void run_command(arg_node* args)
                 FILE *fp_err = fopen(err_file, "a+");
                 dup2(fileno(fp_err), STDERR_FILENO);
                 fclose(fp_err);
+            } else if (errisstdout == 1) {
+                printf("Redirecting stderr to stdout\n");
+                dup2(fileno(stdout), fileno(stderr));
             }
             if (output_file != "") {
                 printf("output: %s\n", output_file);
@@ -417,7 +421,7 @@ void run_command(arg_node* args)
         }
 
         if (wait_for_comp==1) { while(wait() > 0) { /* wait for completion */ ; } }
-        
+
     } else {
         fprintf(stderr, "error at line %d: command '%s' unable to be executed.\n", yylineno, args->arg_str);
     }
