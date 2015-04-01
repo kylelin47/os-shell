@@ -383,7 +383,6 @@ void run_command(arg_node* args)
     for (index = 0; index < num_pipes + 1; index++)
     {
         if ( index == num_pipes ) {
-            char *envp[] = { NULL };
             int arg_size = get_args_list_size(arg_table[index])+1;
             char *argv[ arg_size+1 ];
             char* input_file = "";
@@ -458,18 +457,17 @@ void run_command(arg_node* args)
                     dup2(fileno(fp_out), STDOUT_FILENO);
                     fclose(fp_out);
                 }
-                execve( arg_table[index]->arg_str, argv, envp );
+                execve( arg_table[index]->arg_str, argv, environ );
                 perror("execve");
                 int status;
             }
         }
         else if ( index == 0 )
         {
-            char *envp[] = { NULL };
-            int arg_size = get_args_list_size(args);
+            int arg_size = get_args_list_size(arg_table[index]);
             char *argv[arg_size+1];
             int i;
-            arg_node* current = args;
+            arg_node* current = arg_table[index];
             for (i = 0; i < arg_size; i++)
             {
                 argv[i] = current->arg_str;
@@ -485,17 +483,16 @@ void run_command(arg_node* args)
                     close(pipe_array[n][0]);
                     close(pipe_array[n][1]);
                 }
-                execve( arg_table[index]->arg_str, argv, envp );
+                execve( arg_table[index]->arg_str, argv, environ );
                 perror("execve");
             }
         }
         else
         {
-            char *envp[] = { NULL };
-            int arg_size = get_args_list_size(args);
+            int arg_size = get_args_list_size(arg_table[index]);
             char *argv[arg_size+1];
             int i;
-            arg_node* current = args;
+            arg_node* current = arg_table[index];
             for (i = 0; i < arg_size; i++)
             {
                 argv[i] = current->arg_str;
@@ -514,7 +511,7 @@ void run_command(arg_node* args)
                     close(pipe_array[n][0]);
                     close(pipe_array[n][1]);
                 }
-                execve( arg_table[index]->arg_str, argv, envp );
+                execve( arg_table[index]->arg_str, argv, environ );
                 perror("execve");
             }
         }
