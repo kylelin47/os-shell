@@ -297,13 +297,34 @@ void run_command(arg_node* args)
 {
     args = nested_alias_replace(args);
     if (args == NULL) return; //infinite alias expansion
-    /* Split args at '|' character. Build an array of arg_node* malloc(sizeof(arg_node*)*(num_pipes+1)) and check first arg for every one */
     arg_node* current = args;
     int num_pipes = 0;
-    while (current->next != NULL)
+    while (current != NULL)
     {
         if (strcmp(current->arg_str, "|") == 0) num_pipes++;
         current = current->next;
+    }
+    arg_node** arg_table = malloc(sizeof(arg_node*)*(num_pipes+1));
+    arg_node* h = args;
+    current = args;
+    int index = 0;
+    while (current->next != NULL)
+    {
+        arg_node* next_node = current->next;
+        if (strcmp(current->next->arg_str, "|") == 0)
+        {
+            arg_table[index] = h;
+            h = current->next->next;
+            current->next = NULL;
+            index++;
+        }
+        current = next_node;
+    }
+    arg_table[index] = h;
+    for (index = 0; index < num_pipes + 1; index++)
+    {
+        printf("list %d\n", index);
+        print_args_list(arg_table[index]);
     }
     char* original = args->arg_str;
     /* Search on path if not path to file given */
