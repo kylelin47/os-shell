@@ -534,8 +534,8 @@ cd:
         CD WORD
         {
                 int ret;
-                ret = chdir(path);
-                if (ret != 0) fprintf(stderr, "error: path '%s' not found\n", path);
+                ret = chdir($2);
+                if (ret != 0) fprintf(stderr, "error: path '%s' not found\n", $2);
         }
         ;
 cd_no_args:

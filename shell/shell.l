@@ -35,12 +35,12 @@ unalias                 return UNALIAS;
                         {
                                 int i;
                                 char* substr = malloc(strlen(text));
-                                substr[0] = '\0';
                                 for (i = 1; i < strlen(text); i++)
                                 {
                                         if (text[i] != '/') substr[i-1] = text[i];
                                         else break;
                                 }
+                                substr[i-1] = '\0';
                                 if (substr[0] == '\0')
                                 {
                                         text++;
@@ -51,12 +51,13 @@ unalias                 return UNALIAS;
                                         struct passwd* pw;
                                         if((pw = getpwnam(substr)) == NULL)
                                         {
-                                              fprintf( stderr, "getpwnam: unknown %s\n",
-                                                argv[1] );
+                                              fprintf(stderr, "error: unknown user %s\n", substr);
                                         }
-                                        printf( "home dir    %s\n", pw->pw_dir );
-                                        text += strlen(substr) + 1;
-                                        text = concat(pw->pw_dir, text);
+                                        else
+                                        {
+                                            text += strlen(substr) + 1;
+                                            text = concat(pw->pw_dir, text);
+                                        }
                                 }
                                 free(substr);
                         }
