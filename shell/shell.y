@@ -359,7 +359,8 @@ void run_command(arg_node* args)
             }
         }
     }
-    int pipe_array[20][2];
+    if (num_pipes > 200) num_pipes = 200;
+    int pipe_array[200][2];
     int n;
     for (n = 0; n < num_pipes; n++)
     {
@@ -370,7 +371,6 @@ void run_command(arg_node* args)
         }
     }
     int wait_for_comp = 1;
-    //check if the command is accessible/executable
     for (index = 0; index < num_pipes + 1; index++)
     {
         if ( index == num_pipes ) {
