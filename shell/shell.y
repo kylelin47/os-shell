@@ -297,12 +297,15 @@ void run_command(arg_node* args)
 {
     args = nested_alias_replace(args);
     if (args == NULL) return; //infinite alias expansion
-    char* original = args->arg_str;
-    if (args->arg_str[0] == '~')
+    /* Split args at '|' character. Build an array of arg_node* malloc(sizeof(arg_node*)*(num_pipes+1)) and check first arg for every one */
+    arg_node* current = args;
+    int num_pipes = 0;
+    while (current->next != NULL)
     {
-        args->arg_str++;
-        args->arg_str = concat(getenv("HOME"), args->arg_str);
+        if (strcmp(current->arg_str, "|") == 0) num_pipes++;
+        current = current->next;
     }
+    char* original = args->arg_str;
     /* Search on path if not path to file given */
     if ( !has_character(args->arg_str, '/') )
     {
@@ -345,6 +348,7 @@ void run_command(arg_node* args)
     //if (args != NULL) print_args_list(args);
     
     //check if the command is accessible/executable
+    //check if it's the last one in array of arg_node* and see
     if ( access( args->arg_str, F_OK|X_OK ) == 0 ) {
         //can be executed
         char *envp[] = { NULL };
@@ -530,17 +534,8 @@ cd:
         CD WORD
         {
                 int ret;
-                int tilde = 0;
-                char *path = $2;
-                if ($2[0] == '~')
-                {
-                        path++;
-                        path = concat(getenv("HOME"), path);
-                        tilde = 1;
-                }
                 ret = chdir(path);
                 if (ret != 0) fprintf(stderr, "error: path '%s' not found\n", path);
-                if (tilde == 1) free(path);
         }
         ;
 cd_no_args:

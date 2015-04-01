@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <sys/types.h>
+#include <pwd.h>
 typedef struct args_node {
     char* arg_str;
     struct args_node * next;
