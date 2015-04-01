@@ -320,135 +320,213 @@ void run_command(arg_node* args)
         }
         current = next_node;
     }
+    if (h == NULL)
+    {
+        fprintf(stderr, "error at line %d: pipe at EOL\n", yylineno);
+        free(arg_table);
+        return;
+    }
     arg_table[index] = h;
+    /* Search on path if not path to file given */
     for (index = 0; index < num_pipes + 1; index++)
     {
-        printf("list %d\n", index);
-        print_args_list(arg_table[index]);
-    }
-    char* original = args->arg_str;
-    /* Search on path if not path to file given */
-    if ( !has_character(args->arg_str, '/') )
-    {
-        char* path = getenv("PATH");
-        arg_node* paths = split_to_tokens(path, ":");
-        arg_node* current_path = paths;
-        char* fname;
-        int found = 0;
-        while (current_path != NULL && found == 0)
+        if ( !has_character(arg_table[index]->arg_str, '/') )
         {
-            char* temp = concat(current_path->arg_str, "/");
-            fname = concat(temp, args->arg_str);
-            free(temp);
-            if( access( fname, F_OK ) != -1 )
+            char* path = getenv("PATH");
+            arg_node* paths = split_to_tokens(path, ":");
+            arg_node* current_path = paths;
+            char* fname;
+            int found = 0;
+            while (current_path != NULL && found == 0)
             {
-                found = 1;
-                args->arg_str = fname;
-            }
-            else
-            {
-                free(fname);
-            }
-            current_path = current_path->next;
-        }
-        if (found == 0)
-        {
-            fprintf(stderr, "error at line %d: command '%s' not found\n", yylineno, args->arg_str);
-            return;
-        }
-    }
-    else
-    {
-        if( access( args->arg_str, F_OK|X_OK ) != 0 )
-        {
-            fprintf(stderr, "error at line %d: command '%s' not found\n", yylineno, args->arg_str);
-            return;
-        }
-    }
-    
-    //if (args != NULL) print_args_list(args);
-    
-    //check if the command is accessible/executable
-    //check if it's the last one in array of arg_node* and see
-    if ( access( args->arg_str, F_OK|X_OK ) == 0 ) {
-        //can be executed
-        char *envp[] = { NULL };
-        int arg_size = get_args_list_size(args)+1;
-        char *argv[ arg_size+1 ];
-        char* input_file = "";
-        char* output_file = "";
-        char* err_file = "";
-        int errisstdout = 0;
-        char* curr_arg;
-        int wait_for_comp = 1;
-        int i = 0;
-        arg_node* current = args;
-        while(current != NULL) {
-            curr_arg = current->arg_str;
-            if (i<arg_size-1) {argv[i] = curr_arg;} //get args before >,<,|,etc
-            current = current->next;
-            i++;
-            //printf("curr %s\n", curr_arg );
-            if (strcmp(curr_arg, ">") == 0) { //new file for output
-                output_file = current->arg_str;
-                current = current->next;
-                i++;
-            } else if (strcmp(curr_arg, "<") == 0) {//new file for input
-                input_file = current->arg_str;
-                current = current->next;
-                i++;
-            } else if (strcmp(curr_arg, "2>$1") == 0) {
-                //set std err to std out
-                errisstdout = 1;
-            } else if (curr_arg[0]=='2' && curr_arg[1]=='>') {
-                //set std err to another file
-                int k = 0;
-                char errf[strlen(curr_arg) - 2];
-                for(k = 0; k < strlen(curr_arg)-2; k++) {
-                    errf[k] = curr_arg[k+2];
+                char* temp = concat(current_path->arg_str, "/");
+                fname = concat(temp, arg_table[index]->arg_str);
+                free(temp);
+                if( access( fname, F_OK ) != -1 )
+                {
+                    found = 1;
+                    arg_table[index]->arg_str = fname;
                 }
-                err_file = concat("", errf);
-            } else if (curr_arg[0]=='&') {
-                //perform in background
-                wait_for_comp = 0;
+                else
+                {
+                    free(fname);
+                }
+                current_path = current_path->next;
+            }
+            if (found == 0)
+            {
+                fprintf(stderr, "error at line %d: command '%s' not found\n", yylineno, arg_table[index]->arg_str);
+                return;
             }
         }
-        argv[arg_size-1] = NULL; //null terminated bruh
-
-        //printf("Command %s can be executed.\n", args->arg_str);
-        int childPID = fork();
-        if ( childPID == 0 ) {
-            //child process
-            if (input_file != "") {
-                printf("input: %s\n", input_file);
-                FILE *fp_in = fopen(input_file, "a+");
-                dup2(fileno(fp_in), STDIN_FILENO);
-                fclose(fp_in);
+        else
+        {
+            if( access( arg_table[index]->arg_str, F_OK|X_OK ) != 0 )
+            {
+                fprintf(stderr, "error at line %d: command '%s' not found\n", yylineno, arg_table[index]->arg_str);
+                return;
             }
-            if (err_file != "") {
-                printf("err: %s\n", err_file);
-                FILE *fp_err = fopen(err_file, "a+");
-                dup2(fileno(fp_err), STDERR_FILENO);
-                fclose(fp_err);
-            } else if (errisstdout == 1) {
-                printf("Redirecting stderr to stdout\n");
-                dup2(fileno(stdout), fileno(stderr));
-            }
-            if (output_file != "") {
-                printf("output: %s\n", output_file);
-                FILE *fp_out = fopen(output_file, "a+");
-                dup2(fileno(fp_out), STDOUT_FILENO);
-                fclose(fp_out);
-            }
-            execve( args->arg_str, argv, envp );
-            perror("execve");
-            int status;
         }
+    }
+    int pipe_array[20][2];
+    int n;
+    for (n = 0; n < num_pipes; n++)
+    {
+        if (pipe(pipe_array[n]) < 0)
+        {
+            fprintf(stderr, "error at line %d: pipe failed\n", yylineno );
+            return;
+        }
+    }
+    int wait_for_comp = 1;
+    //check if the command is accessible/executable
+    for (index = 0; index < num_pipes + 1; index++)
+    {
+        if ( index == num_pipes ) {
+            char *envp[] = { NULL };
+            int arg_size = get_args_list_size(arg_table[index])+1;
+            char *argv[ arg_size+1 ];
+            char* input_file = "";
+            char* output_file = "";
+            char* err_file = "";
+            int errisstdout = 0;
+            char* curr_arg;
+            int i = 0;
+            arg_node* current = arg_table[index];
+            while(current != NULL) {
+                curr_arg = current->arg_str;
+                if (i<arg_size-1) {argv[i] = curr_arg;} //get args before >,<,|,etc
+                current = current->next;
+                i++;
+                //printf("curr %s\n", curr_arg );
+                if (strcmp(curr_arg, ">") == 0) { //new file for output
+                    output_file = current->arg_str;
+                    current = current->next;
+                    i++;
+                } else if (strcmp(curr_arg, "<") == 0) {//new file for input
+                    input_file = current->arg_str;
+                    current = current->next;
+                    i++;
+                } else if (strcmp(curr_arg, "2>$1") == 0) {
+                    //set std err to std out
+                    errisstdout = 1;
+                } else if (curr_arg[0]=='2' && curr_arg[1]=='>') {
+                    //set std err to another file
+                    int k = 0;
+                    char errf[strlen(curr_arg) - 2];
+                    for(k = 0; k < strlen(curr_arg)-2; k++) {
+                        errf[k] = curr_arg[k+2];
+                    }
+                    err_file = concat("", errf);
+                } else if (curr_arg[0]=='&') {
+                    //perform in background
+                    wait_for_comp = 0;
+                }
+            }
+            argv[arg_size-1] = NULL; //null terminated bruh
 
-        if (wait_for_comp==1) { while(wait() > 0) { /* wait for completion */ ; } }
-
-    } else {
-        fprintf(stderr, "error at line %d: command '%s' unable to be executed.\n", yylineno, args->arg_str);
+            //printf("Command %s can be executed.\n", arg_table[index]->arg_str);
+            int childPID = fork();
+            if ( childPID == 0 ) {
+                //child process
+                if (input_file != "") {
+                    FILE *fp_in = fopen(input_file, "a+");
+                    dup2(fileno(fp_in), STDIN_FILENO);
+                    fclose(fp_in);
+                }
+                else if (num_pipes > 0)
+                {
+                    dup2(pipe_array[index-1][0], STDIN_FILENO);
+                    for (n = 0; n < num_pipes; n++)
+                    {
+                        close(pipe_array[n][0]);
+                        close(pipe_array[n][1]);
+                    }
+                }
+                if (err_file != "") {
+                    printf("err: %s\n", err_file);
+                    FILE *fp_err = fopen(err_file, "a+");
+                    dup2(fileno(fp_err), STDERR_FILENO);
+                    fclose(fp_err);
+                } else if (errisstdout == 1) {
+                    printf("Redirecting stderr to stdout\n");
+                    dup2(fileno(stdout), fileno(stderr));
+                }
+                if (output_file != "") {
+                    printf("output: %s\n", output_file);
+                    FILE *fp_out = fopen(output_file, "a+");
+                    dup2(fileno(fp_out), STDOUT_FILENO);
+                    fclose(fp_out);
+                }
+                execve( arg_table[index]->arg_str, argv, envp );
+                perror("execve");
+                int status;
+            }
+        }
+        else if ( index == 0 )
+        {
+            char *envp[] = { NULL };
+            int arg_size = get_args_list_size(args);
+            char *argv[arg_size+1];
+            int i;
+            arg_node* current = args;
+            for (i = 0; i < arg_size; i++)
+            {
+                argv[i] = current->arg_str;
+                current = current->next;
+            }
+            argv[arg_size] = NULL;
+            int childPID = fork();
+            if ( childPID == 0 )
+            {
+                dup2(pipe_array[index][1], STDOUT_FILENO);
+                for (n = 0; n < num_pipes; n++)
+                {
+                    close(pipe_array[n][0]);
+                    close(pipe_array[n][1]);
+                }
+                execve( arg_table[index]->arg_str, argv, envp );
+                perror("execve");
+            }
+        }
+        else
+        {
+            char *envp[] = { NULL };
+            int arg_size = get_args_list_size(args);
+            char *argv[arg_size+1];
+            int i;
+            arg_node* current = args;
+            for (i = 0; i < arg_size; i++)
+            {
+                argv[i] = current->arg_str;
+                current = current->next;
+            }
+            argv[arg_size] = NULL;
+            int childPID = fork();
+            if ( childPID == 0 )
+            {
+                dup2(pipe_array[index-1][0], STDIN_FILENO);     //replacing stdin with pipe read
+                dup2(pipe_array[index][1], STDOUT_FILENO); //replace stdout with pipe write
+                close(pipe_array[index][0]);
+                close(pipe_array[index][1]);
+                for (n = 0; n < num_pipes; n++)
+                {
+                    close(pipe_array[n][0]);
+                    close(pipe_array[n][1]);
+                }
+                execve( arg_table[index]->arg_str, argv, envp );
+                perror("execve");
+            }
+        }
+    }
+    for (n = 0; n < num_pipes; n++)
+    {
+        close(pipe_array[n][0]);
+        close(pipe_array[n][1]);
+    }
+    if (wait_for_comp)
+    {
+        while ( wait() > 0 ) {};
     }
 }
 
