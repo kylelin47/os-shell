@@ -354,6 +354,7 @@ void run_command(arg_node* args)
         char* output_file = "";
         char* err_file = "";
         char* curr_arg;
+        int wait_for_comp = 1;
         int i = 0;
         arg_node* current = args;
         while(current != NULL) {
@@ -381,6 +382,9 @@ void run_command(arg_node* args)
                     errf[k] = curr_arg[k+2];
                 }
                 err_file = concat("", errf);
+            } else if (curr_arg[0]=='&') {
+                //perform in background
+                wait_for_comp = 0;
             }
         }
         argv[arg_size-1] = NULL; //null terminated bruh
@@ -409,8 +413,14 @@ void run_command(arg_node* args)
             }
             execve( args->arg_str, argv, envp );
             perror("execve");
+            int status;
         }
-    } else {
+
+        if (wait_for_comp == 1) {
+            while(wait() > 0) { /* wait for completion */ ; }
+        }
+    }
+    else { //cant be accessed/executed
         fprintf(stderr, "error at line %d: command '%s' unable to be executed.\n", yylineno, args->arg_str);
     }
 }
