@@ -211,7 +211,8 @@ int get_args_list_size(arg_node * head)
         if (strcmp(current->arg_str, ">") != 0 &&
             strcmp(current->arg_str, "<") != 0 &&
             strcmp(current->arg_str, "|") != 0 &&
-            (current->arg_str[0]!='2' && current->arg_str[1]!='>') ) {
+            (current->arg_str[0]!='2' && current->arg_str[1]!='>') &&
+            strcmp(current->arg_str, "&") != 0) {
                 counter++;
                 current = current->next; 
         }
