@@ -416,11 +416,9 @@ void run_command(arg_node* args)
             int status;
         }
 
-        if (wait_for_comp == 1) {
-            while(wait() > 0) { /* wait for completion */ ; }
-        }
-    }
-    else { //cant be accessed/executed
+        if (wait_for_comp==1) { while(wait() > 0) { /* wait for completion */ ; } }
+        
+    } else {
         fprintf(stderr, "error at line %d: command '%s' unable to be executed.\n", yylineno, args->arg_str);
     }
 }
