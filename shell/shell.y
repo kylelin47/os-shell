@@ -202,16 +202,6 @@ void push_arg(arg_node** head, char* arg_str) { //this is a push front op
     *head = newNode;
 }
 
-void print_args_list(arg_node * head)
-{
-    arg_node * current = head;
-    while (current != NULL)
-    {
-        printf("%s\n", current->arg_str);
-        current = current->next;
-    }
-}
-
 int get_args_list_size(arg_node * head)
 {
     arg_node * current = head;
@@ -443,16 +433,13 @@ void run_command(arg_node* args)
                     }
                 }
                 if (err_file != "") {
-                    printf("err: %s\n", err_file);
                     FILE *fp_err = fopen(err_file, "a+");
                     dup2(fileno(fp_err), STDERR_FILENO);
                     fclose(fp_err);
                 } else if (errisstdout == 1) {
-                    printf("Redirecting stderr to stdout\n");
                     dup2(fileno(stdout), fileno(stderr));
                 }
                 if (output_file != "") {
-                    printf("output: %s\n", output_file);
                     FILE *fp_out = fopen(output_file, "a+");
                     dup2(fileno(fp_out), STDOUT_FILENO);
                     fclose(fp_out);
@@ -502,8 +489,8 @@ void run_command(arg_node* args)
             int childPID = fork();
             if ( childPID == 0 )
             {
-                dup2(pipe_array[index-1][0], STDIN_FILENO);     //replacing stdin with pipe read
-                dup2(pipe_array[index][1], STDOUT_FILENO); //replace stdout with pipe write
+                dup2(pipe_array[index-1][0], STDIN_FILENO);
+                dup2(pipe_array[index][1], STDOUT_FILENO);
                 close(pipe_array[index][0]);
                 close(pipe_array[index][1]);
                 for (n = 0; n < num_pipes; n++)
@@ -542,7 +529,6 @@ int yywrap()
 int main(int argc, char* argv[])
 {       
         alias_head = NULL;
-        printf("> ");
         yyparse();
 } 
 
