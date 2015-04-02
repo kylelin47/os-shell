@@ -522,7 +522,6 @@ void yyerror(const char *str)
 
 int yywrap()
 {
-        fclose(yyin);
         return 1;
 }
 
@@ -588,7 +587,6 @@ command:
 bye:
         BYE
         {
-                fclose(yyin);
                 return 0;
         }
         ;
@@ -617,7 +615,7 @@ cd:
         {
                 int ret;
                 ret = chdir($2);
-                if (ret != 0) fprintf(stderr, "error: path '%s' not found\n", $2);
+                if (ret != 0) fprintf(stderr, "error at line %d: path '%s' not found\n", yylineno, $2);
         }
         ;
 cd_no_args:

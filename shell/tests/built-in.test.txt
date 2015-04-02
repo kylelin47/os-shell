@@ -21,4 +21,3 @@ cd asodspdk
 cd ${HOME}/os-shell
 ls
 e r r r o r
-bye
