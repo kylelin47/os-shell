@@ -1,6 +1,14 @@
 # os-shell
 A Linux shell written in LEX/YACC.
 
+#Missing Features:
+
+Filename Completion
+
+#Implemented Features:
+
+Everything else
+
 Do
 ```
 sudo apt-get install flex

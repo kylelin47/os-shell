@@ -6,7 +6,6 @@ Precedence Rules:
 %{
 #include "node.h"
 #include "y.tab.h"
-#include <glob.h>
 %}
 %option yylineno
 %%
@@ -50,9 +49,18 @@ unalias                 return UNALIAS;
                                 }
                               }
                               current->next = NULL;
+                              int n = globbuf.gl_pathc;
                               globfree(&globbuf);
-                              yylval.arg_n = head;
-                              return ARGS;
+                              if (n > 1)
+                              {
+                                yylval.arg_n = head;
+                                return ARGS;
+                              }
+                              else
+                              {
+                                yylval.string = head->arg_str;
+                                return WORD;
+                              }
                            }
                          }
                         if (text[0] == '~')

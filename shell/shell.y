@@ -315,6 +315,33 @@ void run_command(arg_node* args)
     /* Search on path if not path to file given */
     for (index = 0; index < num_pipes + 1; index++)
     {
+        arg_node* current = arg_table[index];
+        while (current != NULL)
+        {
+            arg_node* original = current->next;
+            if (has_character(current->arg_str, '*') || has_character(current->arg_str, '?'))
+            {
+               glob_t globbuf;
+               if (glob(current->arg_str, 0, NULL, &globbuf) == 0)
+               {
+
+                  size_t i;
+                  arg_node* iter = current;
+                  for (i = 0; i < globbuf.gl_pathc; i++)
+                  {
+                    iter->arg_str = strdup(globbuf.gl_pathv[i]);
+                    if (i != globbuf.gl_pathc - 1)
+                    {
+                      iter->next = malloc(sizeof(arg_node));
+                      iter = iter->next;
+                    }
+                  }
+                  iter->next = original;
+                  globfree(&globbuf);
+                }
+            }
+            current = original;
+        }
         if ( !has_character(arg_table[index]->arg_str, '/') )
         {
             char* path = getenv("PATH");
