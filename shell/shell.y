@@ -202,6 +202,7 @@ int get_args_list_size(arg_node * head)
     while (current != NULL)
     {
         if (strcmp(current->arg_str, ">") != 0 &&
+            strcmp(current->arg_str, ">>") != 0 &&
             strcmp(current->arg_str, "<") != 0 &&
             strcmp(current->arg_str, "|") != 0 &&
             (current->arg_str[0]!='2' && current->arg_str[1]!='>') &&
@@ -381,7 +382,7 @@ void run_command(arg_node* args)
                 if (i<arg_size-1) {argv[i] = curr_arg;} //get args before >,<,|,etc
                 current = current->next;
                 i++;
-                if (strcmp(curr_arg, ">") == 0) { //new file for output
+                if (strcmp(curr_arg, ">") == 0 || strcmp(curr_arg, ">>") == 0) { //new file for output
                     if (current == NULL)
                     {
                         fprintf(stderr, "error at line %d: no output file specified after >\n", yylineno );
