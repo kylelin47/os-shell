@@ -31,38 +31,6 @@ unalias                 return UNALIAS;
                                   yylval.arg_n = split_to_tokens(text, " \t");
                                   return ARGS;
                          }
-                         if (has_character(text, '*') || has_character(text, '?'))
-                         {
-                           glob_t globbuf;
-                           if (glob(text, 0, NULL, &globbuf) == 0)
-                           {
-                              size_t i;
-                              arg_node* head = malloc(sizeof(arg_node));
-                              arg_node* current = head;
-                              for (i = 0; i < globbuf.gl_pathc; i++)
-                              {
-                                current->arg_str = strdup(globbuf.gl_pathv[i]);
-                                if (i != globbuf.gl_pathc - 1)
-                                {
-                                  current->next = malloc(sizeof(arg_node));
-                                  current = current->next;
-                                }
-                              }
-                              current->next = NULL;
-                              int n = globbuf.gl_pathc;
-                              globfree(&globbuf);
-                              if (n > 1)
-                              {
-                                yylval.arg_n = head;
-                                return ARGS;
-                              }
-                              else
-                              {
-                                yylval.string = head->arg_str;
-                                return WORD;
-                              }
-                           }
-                         }
                         if (text[0] == '~')
                         {
                                 int i;
@@ -93,8 +61,39 @@ unalias                 return UNALIAS;
                                 }
                                 free(substr);
                         }
-                         yylval.string = text;
-                         return WORD;}
+                        if (has_character(text, '*') || has_character(text, '?'))
+                        {
+                           glob_t globbuf;
+                           if (glob(text, 0, NULL, &globbuf) == 0)
+                           {
+                              int n = globbuf.gl_pathc;
+                              if (n == 1)
+                              {
+                                yylval.string = strdup(globbuf.gl_pathv[0]);
+                                globfree(&globbuf);
+                                return WORD;
+                              }
+                              size_t i;
+                              arg_node* head = malloc(sizeof(arg_node));
+                              arg_node* current = head;
+                              for (i = 0; i < globbuf.gl_pathc; i++)
+                              {
+                                current->arg_str = strdup(globbuf.gl_pathv[i]);
+                                if (i != globbuf.gl_pathc - 1)
+                                {
+                                  current->next = malloc(sizeof(arg_node));
+                                  current = current->next;
+                                }
+                              }
+                              current->next = NULL;
+                              
+                              globfree(&globbuf);
+                              yylval.arg_n = head;
+                              return ARGS;
+                           }
+                        }
+                        yylval.string = text;
+                        return WORD;}
 ;                       return TERMINATOR;
 \n                      return TERMINATOR;
 [ \t]+                  /* ignore whitespace */;
