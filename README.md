@@ -2,23 +2,31 @@
 
 A Linux shell written in LEX/YACC, by Kyle Lin and Joachim Jones.
 
-Our code is contained within the shell.l and shell.y files.
+Our code is contained within the node.h, shell.l, and shell.y files.
 
+#Missing Features
+
+- File Name Completion
 
 #Features
 
 - All built-in commands (setenv, printenv, unsetenv, cd, alias, unalias)
-- Running commands with any number of arguments (i.e. 'ls -l')
+- Running commands with any number of arguments (i.e. 'ls -l'). Searches on path if '/' not present in command name.
 - Environment variable expansion
-- Aliasing support and checking for infinite alias dependency
+- Aliasing support and checking for infinite alias expansion
 - IO redirection: stdout, stderr, and stdin can all be redirected
 - Pipe support for any number of pipes
 - '&' support for program completion in background if desired
 - Wildcard matching with the '*' and '?' characters
-- EXTRA CREDIT: Tilde expansion also supported
+- Prints errors to stderr with a description of the problem and the offending line number
+- Handles escaping. echo "my \"string" will output my "string
+- EXTRA CREDIT: Tilde expansion also supported. ~name will expand to name's home directory, ~ will expand to current user's home.
 
 
 #Code Structure
+
+node.h
+- Defines a linked list node for use in both shell.l and shell.y
 
 shell.l:
 - Reads in the input, defines input as WORDs, ARGs, and TERMINATORs
@@ -38,7 +46,7 @@ shell.y:
 	- remove_environment(arg_node* args) to remove an env variable
 	- run_command(arg_node* args) which is the big function which will do these for every pipe:
 		- call nested_alias_replace(..) on the command
-		- if the command is built in, perfrom built-in command
+		- if the command is built in, perform built-in command
 		- search in the path for the command, return error if not found
 		- looks in the list of arguments for the IO-redirection keywords and redirect stdout, stdin, or stderr if desired
 		- calls exeve(..) on the command with the list of args
@@ -46,7 +54,6 @@ shell.y:
 
 
 #TO RUN SHELL
-A makefile is included with our shell project submission.
-Simply run 'make' and then './shell.out' to access our shell.
+A Makefile is included with our shell project submission. Simply run 'make' and then './shell.out' to run our shell.
 
-Tested on Ubuntu 14.04.2 64-bit
+Tested on Ubuntu 14.04.2 64-bit and the CISE lab machines. Lex and Yacc must be installed.
