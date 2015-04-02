@@ -517,7 +517,7 @@ void run_command(arg_node* args)
 /*YACC YACC YACC*/
 void yyerror(const char *str)
 {
-        fprintf(stderr,"error: %s at line %d\n", str, yylineno);
+        fprintf(stderr, "error at line %d: %s\n", yylineno, str);
 }
 
 int yywrap()
