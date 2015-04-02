@@ -195,13 +195,6 @@ char* str_replace_first(char* string, char* substr, char* replacement)
 }
 
 /* ARGS Linked List Stuff */
-void push_arg(arg_node** head, char* arg_str) { //this is a push front op
-    arg_node * newNode = malloc(sizeof(arg_node));
-    newNode->arg_str = arg_str;
-    newNode->next = *head;
-    *head = newNode;
-}
-
 int get_args_list_size(arg_node * head)
 {
     arg_node * current = head;
@@ -359,7 +352,8 @@ void run_command(arg_node* args)
             }
         }
     }
-    int pipe_array[20][2];
+    if (num_pipes > 200) num_pipes = 200;
+    int pipe_array[200][2];
     int n;
     for (n = 0; n < num_pipes; n++)
     {
@@ -370,7 +364,6 @@ void run_command(arg_node* args)
         }
     }
     int wait_for_comp = 1;
-    //check if the command is accessible/executable
     for (index = 0; index < num_pipes + 1; index++)
     {
         if ( index == num_pipes ) {
@@ -388,12 +381,21 @@ void run_command(arg_node* args)
                 if (i<arg_size-1) {argv[i] = curr_arg;} //get args before >,<,|,etc
                 current = current->next;
                 i++;
-                //printf("curr %s\n", curr_arg );
                 if (strcmp(curr_arg, ">") == 0) { //new file for output
+                    if (current == NULL)
+                    {
+                        fprintf(stderr, "error at line %d: no output file specified after >\n", yylineno );
+                        return;
+                    }
                     output_file = current->arg_str;
                     current = current->next;
                     i++;
                 } else if (strcmp(curr_arg, "<") == 0) {//new file for input
+                    if (current == NULL)
+                    {
+                        fprintf(stderr, "error at line %d: no input file specified after <\n", yylineno );
+                        return;
+                    }
                     input_file = current->arg_str;
                     current = current->next;
                     i++;
@@ -415,7 +417,6 @@ void run_command(arg_node* args)
             }
             argv[arg_size-1] = NULL; //null terminated bruh
 
-            //printf("Command %s can be executed.\n", arg_table[index]->arg_str);
             int childPID = fork();
             if ( childPID == 0 ) {
                 //child process
@@ -492,8 +493,6 @@ void run_command(arg_node* args)
             {
                 dup2(pipe_array[index-1][0], STDIN_FILENO);
                 dup2(pipe_array[index][1], STDOUT_FILENO);
-                close(pipe_array[index][0]);
-                close(pipe_array[index][1]);
                 for (n = 0; n < num_pipes; n++)
                 {
                     close(pipe_array[n][0]);
