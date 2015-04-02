@@ -238,6 +238,59 @@ arg_node* split_to_tokens(char* string, char* delimiter)
 /* end args stuff */
 
 /* Exec stuff */
+char* path_expand(char* path)
+{
+    arg_node* paths = split_to_tokens(path, ":"); 
+    arg_node* current = paths;
+    int total_len = 0;
+    while (current != NULL)
+    {
+        if (current->arg_str[0] == '~')
+        {
+            int i;
+            char* substr = malloc(strlen(current->arg_str));
+            for (i = 1; i < strlen(current->arg_str); i++)
+            {
+                if (current->arg_str[i] != '/') substr[i-1] = current->arg_str[i];
+                else break;
+            }
+            substr[i-1] = '\0';
+            if (substr[0] == '\0')
+            {
+                current->arg_str++;
+                current->arg_str = concat(getenv("HOME"), current->arg_str);
+            }
+            else
+            {
+                struct passwd* pw;
+                if((pw = getpwnam(substr)) == NULL)
+                {
+                      fprintf(stderr, "error at line %d: unknown user %s\n", yylineno, substr);
+                }
+                else
+                {
+                    current->arg_str += strlen(substr) + 1;
+                    current->arg_str = concat(pw->pw_dir, current->arg_str);
+                }
+            }
+            free(substr);
+        }
+        total_len += strlen(current->arg_str) + 1;
+        current = current->next;
+    }
+    char* expanded_path = malloc(sizeof(char)*(total_len + 1));
+    strcat(expanded_path, paths->arg_str);
+    current = paths->next;
+    while (current != NULL)
+    {
+        arg_node* prev_node = current;
+        strcat(expanded_path, ":");
+        strcat(expanded_path, current->arg_str);
+        current = current->next;
+        free(prev_node);
+    }
+    return expanded_path;
+}
 /* Built In. Assumes first arg is name and is not NULL */
 void alias(arg_node* args)
 {
@@ -306,6 +359,10 @@ void set_environment(arg_node* args)
     {
         char* arg_1 = args->next->arg_str;
         char* arg_2 = args->next->next->arg_str;
+        if (strcmp(arg_1, "PATH") == 0)
+        {
+            arg_2 = path_expand(arg_2);
+        }
         setenv(arg_1, arg_2, 1);
     }
     else
@@ -433,7 +490,6 @@ void run_command(arg_node* args)
         return;
     }
     arg_table[index] = h;
-    /* Search on path if not path to file given */
     for (index = 0; index < num_pipes + 1; index++)
     {
         arg_node* current = arg_table[index];

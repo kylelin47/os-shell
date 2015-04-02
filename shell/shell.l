@@ -30,27 +30,23 @@ Precedence Rules:
                                 char* substr = malloc(strlen(text));
                                 for (i = 1; i < strlen(text); i++)
                                 {
-                                        if (text[i] != '/') substr[i-1] = text[i];
-                                        else break;
+                                    if (text[i] != '/') substr[i-1] = text[i];
+                                    else break;
                                 }
                                 substr[i-1] = '\0';
                                 if (substr[0] == '\0')
                                 {
-                                        text++;
-                                        text = concat(getenv("HOME"), text);
+                                    text++;
+                                    text = concat(getenv("HOME"), text);
                                 }
                                 else
                                 {
-                                        struct passwd* pw;
-                                        if((pw = getpwnam(substr)) == NULL)
-                                        {
-                                              fprintf(stderr, "error at line %d: unknown user %s\n", yylineno, substr);
-                                        }
-                                        else
-                                        {
-                                            text += strlen(substr) + 1;
-                                            text = concat(pw->pw_dir, text);
-                                        }
+                                    struct passwd* pw;
+                                    if((pw = getpwnam(substr)) != NULL)
+                                    {
+                                          text += strlen(substr) + 1;
+                                          text = concat(pw->pw_dir, text);
+                                    }
                                 }
                                 free(substr);
                         }

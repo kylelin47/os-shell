@@ -20,7 +20,7 @@ Our code is contained within the node.h, shell.l, and shell.y files.
 - Wildcard matching with the '*' and '?' characters
 - Prints errors to stderr with a description of the problem and the offending line number
 - Handles escaping. echo "my \"string" will output my "string
-- EXTRA CREDIT: Tilde expansion also supported. ~name will expand to name's home directory, ~ will expand to current user's home.
+- EXTRA CREDIT: Tilde expansion also supported. ~name will expand to name's home directory, ~ will expand to current user's home if at the beginning of a word and will not occur on quoted strings. PATH will tilde expand on each colon-separated word.
 
 
 #Code Structure
