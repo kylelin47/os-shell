@@ -1,11 +1,12 @@
 /*
 Precedence Rules:
-	Rules that are matched more specifically come first.
-	If both match the same, first rule written in this file is used.
+        Rules that are matched more specifically come first.
+        If both match the same, first rule written in this file is used.
 */
 %{
 #include "node.h"
 #include "y.tab.h"
+#include <glob.h>
 %}
 %option yylineno
 %%
@@ -31,6 +32,29 @@ unalias                 return UNALIAS;
                                   yylval.arg_n = split_to_tokens(text, " \t");
                                   return ARGS;
                          }
+                         if (has_character(text, '*') || has_character(text, '?'))
+                         {
+                           glob_t globbuf;
+                           if (glob(text, 0, NULL, &globbuf) == 0)
+                           {
+                              size_t i;
+                              arg_node* head = malloc(sizeof(arg_node));
+                              arg_node* current = head;
+                              for (i = 0; i < globbuf.gl_pathc; i++)
+                              {
+                                current->arg_str = strdup(globbuf.gl_pathv[i]);
+                                if (i != globbuf.gl_pathc - 1)
+                                {
+                                  current->next = malloc(sizeof(arg_node));
+                                  current = current->next;
+                                }
+                              }
+                              current->next = NULL;
+                              globfree(&globbuf);
+                              yylval.arg_n = head;
+                              return ARGS;
+                           }
+                         }
                         if (text[0] == '~')
                         {
                                 int i;
@@ -51,7 +75,7 @@ unalias                 return UNALIAS;
                                         struct passwd* pw;
                                         if((pw = getpwnam(substr)) == NULL)
                                         {
-                                              fprintf(stderr, "error: unknown user %s\n", substr);
+                                              fprintf(stderr, "error at line %d: unknown user %s\n", yylineno, substr);
                                         }
                                         else
                                         {

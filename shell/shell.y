@@ -595,6 +595,18 @@ setenv:
         {
                 setenv($2, $3, 1);
         }
+        |
+        SETENV ARGS
+        {
+                if ($2->next != NULL)
+                {
+                    if ($2->next->next != NULL) 
+                        fprintf(stderr, "error at line %d: too many args to setenv\n", yylineno);
+                    char* arg_1 = $2->arg_str;
+                    char* arg_2 = $2->next->arg_str;
+                    setenv(arg_1, arg_2, 1);
+                }
+        }
         ;
 printenv:
         PRINTENV
@@ -627,6 +639,18 @@ alias:
         ALIAS WORD WORD
         {
                 push(&alias_head, $2, $3);
+        }
+        |
+        ALIAS ARGS
+        {
+                if ($2->next != NULL)
+                {
+                    if ($2->next->next != NULL) 
+                        fprintf(stderr, "error at line %d: too many args to alias\n", yylineno);
+                    char* arg_1 = $2->arg_str;
+                    char* arg_2 = $2->next->arg_str;
+                    push(&alias_head, arg_1, arg_2);
+                }
         }
         ;
 alias_print:
