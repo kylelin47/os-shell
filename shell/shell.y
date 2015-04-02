@@ -238,6 +238,95 @@ arg_node* split_to_tokens(char* string, char* delimiter)
 /* end args stuff */
 
 /* Exec stuff */
+/* Built In. Assumes first arg is name and is not NULL */
+void alias(arg_node* args)
+{
+    arg_node* current = args->next;
+    int n = 0;
+    while (current != NULL && n != 2)
+    {
+        n++;
+        current = current->next;
+    }
+    if (n == 2)
+    {
+        char* arg_1 = args->next->arg_str;
+        char* arg_2 = args->next->next->arg_str;
+        push(&alias_head, arg_1, arg_2);
+    }
+    else if (n == 0)
+    {
+        print_alias_list(alias_head);
+    }
+    else
+    {
+        fprintf(stderr, "error at line %d: incorrect number of args for alias\n", yylineno);
+    }
+}
+
+void unalias(arg_node* args)
+{
+    if (args->next != NULL) remove_by_alias(&alias_head, args->next->arg_str);
+    else fprintf(stderr, "error at line %d: too few args for unalias\n", yylineno);
+}
+
+void cd(arg_node* args)
+{
+    arg_node* current = args->next;
+    int n = 0;
+    while (current != NULL && n != 1)
+    {
+        n++;
+        current = current->next;
+    }
+    int ret;
+    char* path;
+    if (n == 0)
+    {
+        path = getenv("HOME");
+    }
+    else
+    {
+        path = args->next->arg_str;
+    }
+    ret = chdir(path);
+    if (ret != 0) fprintf(stderr, "error at line %d: path '%s' not found\n", yylineno, path);
+}
+
+void set_environment(arg_node* args)
+{
+    arg_node* current = args->next;
+    int n = 0;
+    while (current != NULL && n != 2)
+    {
+        n++;
+        current = current->next;
+    }
+    if (n == 2)
+    {
+        char* arg_1 = args->next->arg_str;
+        char* arg_2 = args->next->next->arg_str;
+        setenv(arg_1, arg_2, 1);
+    }
+    else
+    {
+        fprintf(stderr, "error at line %d: too few args for setenv\n", yylineno);
+    }
+}
+
+void remove_environment(arg_node* args)
+{
+    if (args->next != NULL) unsetenv(args->next->arg_str);
+    else fprintf(stderr, "error at line %d: too few args for unsetenv\n", yylineno);
+}
+
+void printenv()
+{
+    char **var;
+    for(var=environ; *var!=NULL;++var)
+        printf("%s\n",*var);
+}
+
 arg_node* nested_alias_replace(arg_node* args)
 {
     int n = 0;
@@ -282,6 +371,38 @@ void run_command(arg_node* args)
 {
     args = nested_alias_replace(args);
     if (args == NULL) return; //infinite alias expansion
+    const char* built_in[7] = {"bye", "setenv", "printenv", "unsetenv", "cd", "alias", "unalias"};
+    int i;
+    for (i = 0; i < 7; i++)
+    {
+        if (strcmp(args->arg_str, built_in[i]) == 0)
+        {
+            switch (i)
+            {
+                case 0:
+                    exit(0);
+                    return;
+                case 1:
+                    set_environment(args);
+                    return;
+                case 2:
+                    printenv();
+                    return;
+                case 3:
+                    remove_environment(args);
+                    return;
+                case 4:
+                    cd(args);
+                    return;
+                case 5:
+                    alias(args);
+                    return;
+                case 6:
+                    unalias(args);
+                    return; 
+            }
+        }
+    }
     arg_node* current = args;
     int num_pipes = 0;
     while (current != NULL)
@@ -561,7 +682,7 @@ int main(int argc, char* argv[])
 
 %}
 
-%token BYE SETENV PRINTENV UNSETENV CD ALIAS UNALIAS TERMINATOR
+%token TERMINATOR
 %union
 {
         char* string;
@@ -574,7 +695,6 @@ int main(int argc, char* argv[])
 commands: /* empty */
         | commands error TERMINATOR { yyerrok; }
         | commands arg_list TERMINATOR { run_command($2); }
-        | commands command TERMINATOR
         ;
 arg_list:
     WORD arg_list { $$ = malloc(sizeof(arg_node));
@@ -592,104 +712,4 @@ arg_list:
                     $$->next = NULL;
                     $$->arg_str = $1; }
     ;
-command:
-        bye
-        |
-        setenv
-        |
-        printenv
-        |
-        unsetenv
-        |
-        cd
-        |
-        cd_no_args
-        |
-        alias
-        |
-        alias_print
-        |
-        unalias
-        ;
-
-bye:
-        BYE
-        {
-                return 0;
-        }
-        ;
-setenv:
-        SETENV WORD WORD
-        {
-                setenv($2, $3, 1);
-        }
-        |
-        SETENV ARGS
-        {
-                if ($2->next != NULL)
-                {
-                    if ($2->next->next != NULL) 
-                        fprintf(stderr, "error at line %d: too many args to setenv\n", yylineno);
-                    char* arg_1 = $2->arg_str;
-                    char* arg_2 = $2->next->arg_str;
-                    setenv(arg_1, arg_2, 1);
-                }
-        }
-        ;
-printenv:
-        PRINTENV
-        {
-                char **var;
-                for(var=environ; *var!=NULL;++var)
-                        printf("%s\n",*var);      
-        }
-        ;
-unsetenv:
-        UNSETENV WORD
-        {
-                unsetenv($2);
-        }
-        ;
-cd:
-        CD WORD
-        {
-                int ret;
-                ret = chdir($2);
-                if (ret != 0) fprintf(stderr, "error at line %d: path '%s' not found\n", yylineno, $2);
-        }
-        ;
-cd_no_args:
-        CD
-        {
-                chdir(getenv("HOME"));
-        }
-alias:
-        ALIAS WORD WORD
-        {
-                push(&alias_head, $2, $3);
-        }
-        |
-        ALIAS ARGS
-        {
-                if ($2->next != NULL)
-                {
-                    if ($2->next->next != NULL) 
-                        fprintf(stderr, "error at line %d: too many args to alias\n", yylineno);
-                    char* arg_1 = $2->arg_str;
-                    char* arg_2 = $2->next->arg_str;
-                    push(&alias_head, arg_1, arg_2);
-                }
-        }
-        ;
-alias_print:
-        ALIAS
-        {
-                print_alias_list(alias_head);
-        }
-unalias:
-        UNALIAS WORD
-        {
-                remove_by_alias(&alias_head, $2);
-        }
-        ;
 %%

@@ -9,13 +9,6 @@ Precedence Rules:
 %}
 %option yylineno
 %%
-bye                     return BYE;
-setenv                  return SETENV;
-printenv                return PRINTENV;
-unsetenv                return UNSETENV;
-cd                      return CD;
-alias                   return ALIAS;
-unalias                 return UNALIAS;
 \"(?:[^"\\]|\\.)*\"     {yylval.string = (char*)calloc(strlen(yytext)-1, sizeof(char));
                         strncpy(yylval.string, &yytext[1], strlen(yytext)-2);
                         char* temp = yylval.string;
