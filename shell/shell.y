@@ -240,56 +240,60 @@ arg_node* split_to_tokens(char* string, char* delimiter)
 /* Exec stuff */
 char* path_expand(char* path)
 {
-    arg_node* paths = split_to_tokens(path, ":"); 
-    arg_node* current = paths;
-    int total_len = 0;
-    while (current != NULL)
+    if (has_character(path, '~'))
     {
-        if (current->arg_str[0] == '~')
+        arg_node* paths = split_to_tokens(path, ":");
+        arg_node* current = paths;
+        int total_len = 0;
+        while (current != NULL)
         {
-            int i;
-            char* substr = malloc(strlen(current->arg_str));
-            for (i = 1; i < strlen(current->arg_str); i++)
+            if (current->arg_str[0] == '~')
             {
-                if (current->arg_str[i] != '/') substr[i-1] = current->arg_str[i];
-                else break;
-            }
-            substr[i-1] = '\0';
-            if (substr[0] == '\0')
-            {
-                current->arg_str++;
-                current->arg_str = concat(getenv("HOME"), current->arg_str);
-            }
-            else
-            {
-                struct passwd* pw;
-                if((pw = getpwnam(substr)) == NULL)
+                int i;
+                char* substr = malloc(strlen(current->arg_str));
+                for (i = 1; i < strlen(current->arg_str); i++)
                 {
-                      fprintf(stderr, "error at line %d: unknown user %s\n", yylineno, substr);
+                    if (current->arg_str[i] != '/') substr[i-1] = current->arg_str[i];
+                    else break;
+                }
+                substr[i-1] = '\0';
+                if (substr[0] == '\0')
+                {
+                    current->arg_str++;
+                    current->arg_str = concat(getenv("HOME"), current->arg_str);
                 }
                 else
                 {
-                    current->arg_str += strlen(substr) + 1;
-                    current->arg_str = concat(pw->pw_dir, current->arg_str);
+                    struct passwd* pw;
+                    if((pw = getpwnam(substr)) == NULL)
+                    {
+                          fprintf(stderr, "error at line %d: unknown user %s\n", yylineno, substr);
+                    }
+                    else
+                    {
+                        current->arg_str += strlen(substr) + 1;
+                        current->arg_str = concat(pw->pw_dir, current->arg_str);
+                    }
                 }
+                free(substr);
             }
-            free(substr);
+            total_len += strlen(current->arg_str) + 1;
+            current = current->next;
         }
-        total_len += strlen(current->arg_str) + 1;
-        current = current->next;
+        char* expanded_path = malloc(sizeof(char)*(total_len + 1));
+        strcat(expanded_path, paths->arg_str);
+        current = paths->next;
+        while (current != NULL)
+        {
+            arg_node* prev_node = current;
+            strcat(expanded_path, ":");
+            strcat(expanded_path, current->arg_str);
+            current = current->next;
+            free(prev_node);
+        }
+        return expanded_path;
     }
-    char* expanded_path = malloc(sizeof(char)*(total_len + 1));
-    strcat(expanded_path, paths->arg_str);
-    current = paths->next;
-    while (current != NULL)
-    {
-        arg_node* prev_node = current;
-        strcat(expanded_path, ":");
-        strcat(expanded_path, current->arg_str);
-        current = current->next;
-        free(prev_node);
-    }
-    return expanded_path;
+    return path;
 }
 /* Built In. Assumes first arg is name and is not NULL */
 void alias(arg_node* args)
@@ -653,7 +657,7 @@ void run_command(arg_node* args)
                 }
                 execve( arg_table[index]->arg_str, argv, environ );
                 perror("execve");
-                int status;
+                _exit(EXIT_FAILURE);
             }
         }
         else if ( index == 0 )
@@ -679,6 +683,7 @@ void run_command(arg_node* args)
                 }
                 execve( arg_table[index]->arg_str, argv, environ );
                 perror("execve");
+                _exit(EXIT_FAILURE);
             }
         }
         else
@@ -705,6 +710,7 @@ void run_command(arg_node* args)
                 }
                 execve( arg_table[index]->arg_str, argv, environ );
                 perror("execve");
+                _exit(EXIT_FAILURE);
             }
         }
     }
