@@ -161,6 +161,16 @@ int has_whitespace(char* string)
     return 0;
 }
 
+int only_whitespace(char* string)
+{
+    int i;
+    for (i = 0; i < strlen(string); i++)
+    {
+        if (string[i] != '\t' && string[i] != ' ') return 0;
+    }
+    return 1;
+}
+
 int has_character(char* string, char ch)
 {
     int i;
@@ -222,7 +232,14 @@ arg_node* split_to_tokens(char* string, char* delimiter)
     token = strtok(tmp, delimiter);
     arg_node* head = malloc(sizeof(arg_node));
     head->next = NULL;
-    head->arg_str = token;
+    if (token != NULL)
+    {
+        head->arg_str = token;
+    }
+    else
+    {
+        head->arg_str = tmp;
+    }
     arg_node* current = head;
     token = strtok(NULL, delimiter); 
     while (token != NULL)
@@ -402,7 +419,7 @@ arg_node* nested_alias_replace(arg_node* args)
             n2++;
         }
         if (n2 == 1000) break;
-        if (has_whitespace(args->arg_str))
+        if (has_whitespace(args->arg_str) && !only_whitespace(args->arg_str))
         {
             args = split_to_tokens(args->arg_str, " \t");
             arg_node* current = args;
@@ -494,6 +511,7 @@ void run_command(arg_node* args)
         return;
     }
     arg_table[index] = h;
+
     for (index = 0; index < num_pipes + 1; index++)
     {
         arg_node* current = arg_table[index];
@@ -737,7 +755,7 @@ int yywrap()
 }
 
 int main(int argc, char* argv[])
-{       
+{
         alias_head = NULL;
         yyparse();
 } 
