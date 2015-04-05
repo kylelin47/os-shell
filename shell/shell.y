@@ -429,7 +429,7 @@ arg_node* nested_alias_replace(arg_node* args)
             args->arg_str = alias_replace(args->arg_str);
             n2++;
         }
-        if (n2 == 1000) break;
+        if (n2 == 1000 || n2 == 0) break;
         if (has_whitespace(args->arg_str) && !only_whitespace(args->arg_str))
         {
             args = split_to_tokens(args->arg_str, " \t");
