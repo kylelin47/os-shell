@@ -36,8 +36,11 @@ Precedence Rules:
                                 substr[i-1] = '\0';
                                 if (substr[0] == '\0')
                                 {
+                                  if (getenv("HOME") != NULL)
+                                  {
                                     text++;
                                     text = concat(getenv("HOME"), text);
+                                  }
                                 }
                                 else
                                 {

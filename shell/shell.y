@@ -276,8 +276,11 @@ char* path_expand(char* path)
                 substr[i-1] = '\0';
                 if (substr[0] == '\0')
                 {
-                    current->arg_str++;
-                    current->arg_str = concat(getenv("HOME"), current->arg_str);
+                    if (getenv("HOME") != NULL)
+                    {
+                        current->arg_str++;
+                        current->arg_str = concat(getenv("HOME"), current->arg_str);
+                    }
                 }
                 else
                 {
@@ -357,7 +360,15 @@ void cd(arg_node* args)
     char* path;
     if (n == 0)
     {
-        path = getenv("HOME");
+        if (getenv("HOME") != NULL)
+        {
+            path = getenv("HOME");
+        }
+        else
+        {
+            fprintf(stderr, "error at line %d: 'HOME' unset\n", yylineno);
+            return;
+        }
     }
     else
     {
@@ -543,6 +554,11 @@ void run_command(arg_node* args)
         }
         if ( !has_character(arg_table[index]->arg_str, '/') )
         {
+            if (getenv("PATH") == NULL)
+            {
+                fprintf(stderr, "error at line %d: 'PATH' unset\n", yylineno);
+                return;
+            }
             char* path = getenv("PATH");
             arg_node* paths = split_to_tokens(path, ":");
             arg_node* current_path = paths;
