@@ -64,98 +64,178 @@ Tested on Ubuntu 14.04.2 64-bit and the CISE lab machines. Lex and Yacc must be 
 - BUILT IN FUNCTIONALITY
 
 	- ENVIRONMENT VARIABLE TESTING:
-	Check setting, printing, and unsetting env variables:
-	$: setenv myvarry happyos
-	$: setenv "w quotes" "works too"
-	$: printenv
-	OUTPUT:
-		... a bunch of preset environment variables like PATH, LANGUAGE, etc
-		myvarry=happyos
-		w quotes=works too
-	$: unsetenv myvarry
-	$: unsetenv "w quotes"
-	OUTPUT:
-		... a bunch of preset environment variables like PATH, LANGUAGE, etc
-		... no longer has myvarry or "w quotes"
+		- Check setting, printing, and unsetting env variables:
+		> setenv myvarry happyos
+		> setenv "w quotes" "works too"
+		> printenv
+		OUTPUT:
+			... a bunch of preset environment variables like PATH, LANGUAGE, etc
+			myvarry=happyos
+			w quotes=works too
+		> unsetenv myvarry
+		> unsetenv "w quotes"
+		OUTPUT:
+			... a bunch of preset environment variables like PATH, LANGUAGE, etc
+			... no longer has myvarry or "w quotes"
 
 	- CHANGE DIRECTORY FUNCTIONALITY
-	Check basic cd:
-	$: ls
-	OUTPUT:
-		... files in the /shell folder, like shell.out, shell.l, etc
-	$: cd
-	$: ls
-	OUTPUT:
-		... files in home, like Desktop, Downloads, Documents, Public, etc
+		- Check basic cd:
+		> ls
+		OUTPUT:
+			... files in the /shell folder, like shell.out, shell.l, etc
+		> cd
+		> ls
+		OUTPUT:
+			... files in home, like Desktop, Downloads, Documents, Public, etc
 
-	Check cd with tilde, should go to the OS-Shell folder:
-	$: cd ~/OS-Shell
-	$: ls
-	OUTPUT:
-		LICENSE.md README.md shell
+		- Check cd with tilde, should go to the OS-Shell folder:
+		> cd ~/OS-Shell
+		> ls
+		OUTPUT:
+			LICENSE.md README.md shell
 
-	Check cd error checking, make sure it tells user that invalid path can't be found:
-	$: cd asdfasdfasdf
-	OUTPUT:
-		error at line 18: path 'asdfasdfasdf' not found
+		- Check cd error checking, make sure it tells user that invalid path can't be found:
+		> cd asdfasdfasdf
+		OUTPUT:
+			error at line 18: path 'asdfasdfasdf' not found
 
-	More advanced functionality, check ${HOME}
-	$: cd ${HOME}/OS-Shell
-	$: ls
-	OUTPUT:
-		LICENSE.md README.md shell
+		- More advanced functionality, check ${HOME}
+		> cd ${HOME}/OS-Shell
+		> ls
+		OUTPUT:
+			LICENSE.md README.md shell
 
 	- ALIAS TESTING:
-	First, check basic functionality. Set an alias "lsdashl" to execute "ls -l":
-	$: alias lsdashl "ls -l"
-	$: lsdashl
-	OUTPUT:
-		total 277
-		-rwxrwxrwx 1 root root 8543 Mar 31 17:42 lex.yy.c
-		... etc
+		- First, check basic functionality. Set an alias "lsdashl" to execute "ls -l":
+		> alias lsdashl "ls -l"
+		> lsdashl
+		OUTPUT:
+			total 277
+			-rwxrwxrwx 1 root root 8543 Mar 31 17:42 lex.yy.c
+			... etc
 
-	Next, check chaining of aliases. Set alias "chainylsl" to "lsdashl" (which is set to "ls -l"):
-	$: alias chainylsl "lsdashl"
-	$: chainylsl
-	OUTPUT:
-		total 277
-		-rwxrwxrwx 1 root root 8543 Mar 31 17:42 lex.y.c
-		... etc
+		- Next, check chaining of aliases. Set alias "chainylsl" to "lsdashl" (which is set to "ls -l"):
+		> alias chainylsl "lsdashl"
+		> chainylsl
+		OUTPUT:
+			total 277
+			-rwxrwxrwx 1 root root 8543 Mar 31 17:42 lex.y.c
+			... etc
 
-	Next, check that an infinite loop of aliases will be caught and dealt with:
-	$: alias bad "good"
-	$: alias good "bad"
-	$: good
-	OUTPUT:
-		error at line 8: infinite alias expansion
+		- Next, check that an infinite loop of aliases will be caught and dealt with:
+		> alias bad "good"
+		> alias good "bad"
+		> good
+		OUTPUT:
+			error at line 8: infinite alias expansion
 
 	- BYE FUNCTIONALITY:
-	Bye should quit the shell gracefully.
-	$: bye
-	... goes back to /shell folder and the basic Linux shell
+		- Bye should quit the shell gracefully.
+		> bye
+		... goes back to /shell folder and the basic Linux shell
 
 	- BASIC ERROR CHECKING:
-	$: e r r o r
-	OUTPUT:
-		error at line 28: command 'e' not found
+		> e r r o r
+		OUTPUT:
+			error at line 28: command 'e' not found
 
 
 - OTHER COMMAND FUNCTIONALITY
 
 	- COMMANDS WITH MULTIPLE ARGUMENTS
-	For example, "ls -l -h"
-	$: ls -l -h
-	OUTPUT:
-		-rwxrwxrwx 1 root root 8.4K Mar 31 17:42 lex.yy.c
-		... etc, all with human readability (-h) and long listing (-l)
+		- For example, "ls -l -h"
+		> ls -l -h
+		OUTPUT:
+			-rwxrwxrwx 1 root root 8.4K Mar 31 17:42 lex.yy.c
+			... etc, all with human readability (-h) and long listing (-l)
 
 	- COMMANDS WITH I/O REDIRECTION
-	Check sending the output of "ls -l -h" to a file, 'mytest.txt'
-	$: ls -l -h $: mytest.txt
-	IN 'mytest.txt':
-		-rwxrwxrwx 1 root root 8.4K Mar 31 17:42 lex.yy.c
-		... etc, same as above
+		- Check sending the output of "ls -l -h" to a file, 'mytest.txt'
+		> ls -l -h > mytest.txt
+		IN 'mytest.txt':
+			-rwxrwxrwx 1 root root 8.4K Mar 31 17:42 lex.yy.c
+			... etc, same as above
 
-	Check redirection of input
+		- Check redirection of input
+		'wc < mytest.txt' should have same result as 'wc mytest.txt', but one uses std input instead of just reading from the file.
+		> wc < mytest.txt
+		OUTPUT:
+			19 164 902
+		> wc mytest.txt
+		OUTPUT:
+			19 164 902 mytest.txt
+
+		- Check redirection of std err
+		'not_there.foo' doesn't exist and should give an error and put it in myerr.txt
+		> ls -l -h not_there.foo 2>myerr.txt
+		IN 'myerr.txt':
+			/bin/ls: cannot access not_there.foo: No such file or directory
+
+	- PIPE FUNCTIONALITY
+		- Check one pipe, get first 3 files in directory with ls and piping
+		> ls
+		OUTPUT:
+			built-in.test.txt fib.c hello.c hello.cpp
+		> ls | head -3
+		OUTPUT:
+			built-in.test.txt
+			fib.c
+			hello.c
+
+		- Check mulitple pipes, get only the third file
+		> ls
+		OUTPUT:
+			built-in.test.txt fib.c hello.c hello.cpp
+		> ls | head -3 | tail -1
+		OUTPUT:
+			hello.c
+
+		- Check combination of pipes and I/O redirection
+		> ls | head -3 | tail -2 > myresult.txt
+		IN myresult.txt:
+			fib.c
+			hello.c
+
+- MISC FUNCTIONALITY (&, ~, *, ?, etc)
+	
+	- & FUNCTIONALITY:
+	Have a program, 'fibby', which takes around 10 seconds to complete.
+		
+		- Make sure shell waits for completion if no '&'
+		> ./fibby
+		OUTPUT:
+			Calculating a big number! (this is printed by fibby)
+		> ls
+		OUTPUT:
+			none, waiting for completion
+		Once fibby completes, OUTPUT:
+			Fib is done!!
+			... ls results (means it was run after fibby completed)
+
+		- Make sure '&' makes programs run in the background
+		> ./fibby &
+		OUTPUT:
+			Calculating a big number! (this is printed by fibby)
+		> ls
+		OUTPUT:
+			... ls results (done while fibby completes)
+		Once fibby completes, OUTPUT:
+			Fib is done!!
+
+	- WILDCARD MATCHING * AND ?
+
+		- * matching, 'ls *.c' should show all .c files in directory
+		> ls *.c
+		OUTPUT:
+			lex.yy.c y.tab.c
+
+		- ? matching, 'ls shell.?' should show all files name shell with a one character file extension
+		> ls shell.?
+		OUTPUT:
+			shell.l shell.y
+
+
+
+
 
 
