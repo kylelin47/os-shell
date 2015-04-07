@@ -456,12 +456,26 @@ arg_node* nested_alias_replace(arg_node* args)
     }
 }
 
+char* find_out_file(arg_node* args) {
+    arg_node * current = args;
+    while (current != NULL)
+    {
+        if (strcmp(current->arg_str, ">") == 0 ) {
+            return current->next->arg_str; 
+        }
+        else { current = current-> next; }
+    }
+    return "!";
+}
+
 void run_command(arg_node* args)
 {
     args = nested_alias_replace(args);
     if (args == NULL) return; //infinite alias expansion
     const char* built_in[7] = {"bye", "setenv", "printenv", "unsetenv", "cd", "alias", "unalias"};
     int i;
+    char* output_f;
+    int childBI_PID;
     for (i = 0; i < 7; i++)
     {
         if (strcmp(args->arg_str, built_in[i]) == 0)
@@ -475,7 +489,19 @@ void run_command(arg_node* args)
                     set_environment(args);
                     return;
                 case 2:
-                    printenv();
+                    output_f = find_out_file(args);
+                    if (output_f != "!") {
+                        childBI_PID = fork();
+                        if ( childBI_PID == 0 ) {
+                            FILE *fp_outpv = fopen(output_f, "a+");
+                            dup2(fileno(fp_outpv), STDOUT_FILENO);
+                            fclose(fp_outpv);
+                            printenv();
+                        }
+                        wait();
+                    } else {
+                        printenv();
+                    }
                     return;
                 case 3:
                     remove_environment(args);
