@@ -7,7 +7,6 @@ Our code is contained within the node.h, shell.l, and shell.y files.
 #Missing Features
 
 - File Name Completion
-- Pipe and I/O of built-in commands
 
 #Features
 
