@@ -1,0 +1,22 @@
+alias lo jj
+alias jj "ls -al"
+lo
+setenv this .
+setenv lsthis "jj ${this}"
+${lsthis}
+alias rot13 "tr a-zA-Z n-za-mN-ZA-M"
+cd tests
+rot13 < fib.c > foo
+cat foo
+cat foo | wc -l
+wc -l *.c | sort | cat
+g++ fib.c
+a.out
+setenv PATH ${PATH}:~/os-shell/shell/tests
+a.out &
+cd ..
+ls *.c shell.?
+cd ~kyle
+ls
+cd ~nouser
+bye

@@ -11,7 +11,7 @@ int Fibonacci(int n)
 } 
 
 main(int argc, char** argv) {
-	printf("Calculating a big ass number bro!\n");
+	printf("Calculating a big number!\n");
 	int i = 0;
 	int f = 0;
 	for (i = 0; i < 43; i++) {
