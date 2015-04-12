@@ -19,4 +19,5 @@ ls *.c shell.?
 cd ~kyle
 ls
 cd ~nouser
+ls asd 2>error
 bye
